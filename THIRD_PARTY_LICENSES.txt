@@ -1,0 +1,21 @@
+PocketSphinx Speech Recognition Engine
+Copyright (c) 1999-2025 Carnegie Mellon University
+Licensed under the BSD-2-Clause License.
+Original source available at https://github.com/cmusphinx/pocketsphinx
+
+SphinxBase Support Library
+Copyright (c) 1999-2025 Carnegie Mellon University
+Licensed under the BSD-2-Clause License.
+Original source available at https://github.com/cmusphinx/sphinxbase
+
+English Text to Phoneme Conversion Code
+
+Derived from C source code written by John A. Wasser
+Email: speech@John-Wasser.com
+Original source: http://www.John-Wasser.com/TextToSpeech/
+
+Translated to Java by Olivier Sarrat
+Email: olivier_sarrat@hotmail.com
+
+Used and adapted within PocketSphinxForUnity by
+The Reading Racer Technology Foundation.
