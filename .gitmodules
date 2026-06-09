@@ -1,0 +1,3 @@
+[submodule "Assets/StreamingAssets/ModelData"]
+	path = Assets/StreamingAssets/ModelData
+	url = https://github.com/ReadingRacerTechnologyFoundation/ModelData.git

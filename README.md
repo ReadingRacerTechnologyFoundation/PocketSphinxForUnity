@@ -49,6 +49,12 @@ form that can be used directly from Unity C# scripts.
 
 ## 🚀 Getting Started
 
+**Make sure to update submodules**
+```bash
+git pull
+git submodule update --init --recursive
+```
+
 ### 📁 Required Folders & Files
 
 You **must** include the following folders in your Unity project:
