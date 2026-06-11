@@ -14,9 +14,9 @@
  */
 using UnityEngine;
 using System.Collections;
-using Sphinx;
+using Rrtf.Sphinx;
 
-namespace SeaShells
+namespace Rrtf
 {
 	/// <summary>
 	/// Heard word. Used by ASR/FSGs. Not really sure how it works and don't want to know so I didn't bother

@@ -13,7 +13,6 @@
  * See THIRD_PARTY_LICENSES.txt for details.
  */
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using System;
 
@@ -31,7 +30,7 @@ using System;
  * Feel free to inherit from SpeechRecognizer for more complex behavior. Make sure to override OnSpeechChanged.
  * Created by Rodrigo Cano 10/2/2014
  **/
-namespace Sphinx
+namespace Rrtf.Sphinx
 {
 	using SphinxNative;
 
@@ -159,7 +158,7 @@ namespace Sphinx
 		}
 
 		/// <summary>
-		/// Starts SpeechRecognier
+		/// Starts SpeechRecognizer
 		/// </summary>
 		/// <param name="searchName">Search name.</param>
 		public void StartRecognizing(string searchName)

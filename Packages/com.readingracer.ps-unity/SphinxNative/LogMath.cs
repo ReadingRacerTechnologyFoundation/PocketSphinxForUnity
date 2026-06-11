@@ -15,7 +15,7 @@
 using UnityEngine;
 using System.Collections;
 
-namespace Sphinx
+namespace Rrtf.Sphinx
 {
 	using SphinxNative;
 	public class LogMath

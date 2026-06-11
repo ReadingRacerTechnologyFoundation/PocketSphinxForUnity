@@ -12,12 +12,10 @@
  * including PocketSphinx and SphinxBase, which are licensed separately.
  * See THIRD_PARTY_LICENSES.txt for details.
  */
-using UnityEngine;
-using System.Collections;
 using System.Collections.ObjectModel;
 using System;
 
-namespace Sphinx.EnglishPhonemes
+namespace Rrtf.Sphinx.EnglishPhonemes
 {
 	public class English{
 		

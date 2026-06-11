@@ -12,8 +12,6 @@
  * including PocketSphinx and SphinxBase, which are licensed separately.
  * See THIRD_PARTY_LICENSES.txt for details.
  */
-using UnityEngine;
-using System.Collections;
 using System;
 
 /**
@@ -30,7 +28,7 @@ using System;
  * Feel free to inherit from SpeechRecognizer for more complex behavior. Make sure to override OnSpeechChanged.
  * Created by Rodrigo Cano 10/2/2014
  **/
-namespace Sphinx
+namespace Rrtf.Sphinx
 {
 	/// <summary>
 	/// Hypothesis. Used with a decoder to store a hypothesis which can be null,

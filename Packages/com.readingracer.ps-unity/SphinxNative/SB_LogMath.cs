@@ -26,7 +26,6 @@
 	#define UNSUPPORTED_PLATFORM
 #endif
 
-using System.Collections;
 using System.Runtime.InteropServices;
 using System;
 
@@ -58,7 +57,7 @@ using System;
  * 
  * Created by Rodrigo Cano 9/17/2014
  **/
-namespace Sphinx.SphinxNative
+namespace Rrtf.Sphinx.SphinxNative
 {
 	public class SB_LogMath
 	{

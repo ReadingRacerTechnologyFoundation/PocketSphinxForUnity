@@ -13,16 +13,14 @@
  * See THIRD_PARTY_LICENSES.txt for details.
  */
 using UnityEngine;
-using System.Collections;
 using System.Text.RegularExpressions;
 using System;
-using System.Collections.Generic;
 using System.Text;
 
 /**
  * Transfered from Java by Rodrigo Cano 10/7/2014
  */
-namespace Sphinx.EnglishPhonemes
+namespace Rrtf.Sphinx.EnglishPhonemes
 {
 	/* 
 English text to phoneme Package in Java, 

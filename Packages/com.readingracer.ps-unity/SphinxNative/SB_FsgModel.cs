@@ -25,8 +25,6 @@
 #else
 	#define UNSUPPORTED_PLATFORM
 #endif
-
-using System.Collections;
 using System.Runtime.InteropServices;
 using System;
 using UnityEngine;
@@ -58,7 +56,7 @@ using UnityEngine;
  * 
  * Created by Rodrigo Cano 9/17/2014
  **/
-namespace Sphinx.SphinxNative
+namespace Rrtf.Sphinx.SphinxNative
 {
 	public class SB_FsgModel
 	{

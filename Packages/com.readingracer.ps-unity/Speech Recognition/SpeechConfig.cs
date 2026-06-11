@@ -14,7 +14,6 @@
  */
  
 using UnityEngine;
-using System.Collections;
 using System;
 
 /**
@@ -31,7 +30,7 @@ using System;
  * Feel free to inherit from SpeechRecognizer for more complex behavior. Make sure to override OnSpeechChanged.
  * Created by Rodrigo Cano 10/2/2014
  **/
-namespace Sphinx
+namespace Rrtf.Sphinx
 {
 	using SphinxNative;
 

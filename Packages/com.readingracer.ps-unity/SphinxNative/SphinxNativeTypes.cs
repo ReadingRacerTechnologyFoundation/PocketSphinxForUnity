@@ -27,9 +27,6 @@
 #endif
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Runtime.InteropServices;
 
 /**
@@ -59,7 +56,7 @@ using System.Runtime.InteropServices;
  * 
  * Created by Rodrigo Cano 9/17/2014
  **/
-namespace Sphinx.SphinxNative
+namespace Rrtf.Sphinx.SphinxNative
 {
     /**
      * A c FILE type

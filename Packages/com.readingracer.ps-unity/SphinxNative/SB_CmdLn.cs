@@ -27,9 +27,6 @@
 #endif
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
@@ -60,7 +57,7 @@ using UnityEngine;
  * 
  * Created by Rodrigo Cano 9/17/2014
  **/
-namespace Sphinx.SphinxNative
+namespace Rrtf.Sphinx.SphinxNative
 {
     /**
      * This class creates and modifies comand line argument

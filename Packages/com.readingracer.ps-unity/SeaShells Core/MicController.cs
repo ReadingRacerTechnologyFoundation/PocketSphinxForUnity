@@ -16,150 +16,152 @@ using UnityEngine;
 using System.Collections;
 using System;
 
-
-/// <summary>
-/// This is the one stop shop for Mic Control.
-/// </summary>
-public class MicController : MonoBehaviour
+namespace Rrtf
 {
-	public delegate void NewAudioSamplesFound(MicController mc, EventArgs e);
-	public event NewAudioSamplesFound OnNewAudioSamplesFound;
-
-	public static bool IsInited { get; private set; }
-	public static MicController Instance { get { return _Me; } }
-
-	//last audio samples taken. Might be null.
-	public short[] AudioSamples { get; private set; }
-
 	/// <summary>
-	/// This is a volume heuristic.
+	/// This is the one stop shop for Mic Control.
 	/// </summary>
-	public float SquaredVolumeHeuristic { get; private set; }
-
-	/// <summary>
-	/// number of samples used to calculate the volume heuristic
-	/// </summary>
-	public float NumSamplesInVolume { get; private set; }
-
-	private int _LastRecordedPos = 0;
-	private AudioClip _Clip;
-	private static MicController _Me;
-
-	public const int SAMPLE_RATE = 16000;
-	private const string NAME = "MIC_CONTROLLER";
-
-	public static void Init(string deviceName, int lengthSec)
+	public class MicController : MonoBehaviour
 	{
-		if (Instance != null)
+		public delegate void NewAudioSamplesFound(MicController mc, EventArgs e);
+		public event NewAudioSamplesFound OnNewAudioSamplesFound;
+
+		public static bool IsInited { get; private set; }
+		public static MicController Instance { get { return _Me; } }
+
+		//last audio samples taken. Might be null.
+		public short[] AudioSamples { get; private set; }
+
+		/// <summary>
+		/// This is a volume heuristic.
+		/// </summary>
+		public float SquaredVolumeHeuristic { get; private set; }
+
+		/// <summary>
+		/// number of samples used to calculate the volume heuristic
+		/// </summary>
+		public float NumSamplesInVolume { get; private set; }
+
+		private int _LastRecordedPos = 0;
+		private AudioClip _Clip;
+		private static MicController _Me;
+
+		public const int SAMPLE_RATE = 16000;
+		private const string NAME = "MIC_CONTROLLER";
+
+		public static void Init(string deviceName, int lengthSec)
 		{
-			Debug.LogWarning("Attempting to create another MicController. Not going to happen");
-			return;
+			if (Instance != null)
+			{
+				Debug.LogWarning("Attempting to create another MicController. Not going to happen");
+				return;
+			}
+
+			_Me = (new GameObject(NAME)).AddComponent<MicController>();
+			_Me._Clip = Microphone.Start(null, true, lengthSec, SAMPLE_RATE);
 		}
 
-		_Me = (new GameObject(NAME)).AddComponent<MicController>();
-		_Me._Clip = Microphone.Start(null, true, lengthSec, SAMPLE_RATE);
-	}
-
-	// Update is called once per frame
-	void Update()
-	{
-		if (_Clip == null)
+		// Update is called once per frame
+		void Update()
 		{
-			Debug.Log("clip is null");
-			return;
+			if (_Clip == null)
+			{
+				Debug.Log("clip is null");
+				return;
+			}
+
+			AudioSamples = GetNewRecordedAudio();
+
+			if (AudioSamples == null)
+				return;
+
+			// Debug.Log("found new audio samples: " + AudioSamples.Length);
+			if (OnNewAudioSamplesFound != null)
+				OnNewAudioSamplesFound(this, EventArgs.Empty);
 		}
 
-		AudioSamples = GetNewRecordedAudio();
-
-		if (AudioSamples == null)
-			return;
-
-		// Debug.Log("found new audio samples: " + AudioSamples.Length);
-		if (OnNewAudioSamplesFound != null)
-			OnNewAudioSamplesFound(this, EventArgs.Empty);
-	}
-
-	public void ResetUtteranceRMSLevels()
-	{
-		SquaredVolumeHeuristic = 0.0f;
-		NumSamplesInVolume = 0;
-	}
-
-	//returns null if no new data. This sometimes happens since 
-	//the mic doesn't record every frame.
-	//isUpdatingPos should be false when calling from EndWork()
-	//this is to allow the other decoders to get the data when they are
-	//updated in Update()
-	private short[] GetNewRecordedAudio(bool isUpdatingPos = true)
-	{
-		int newPos = Microphone.GetPosition(null);
-		//Debug.Log("newPos: " + newPos);
-		if (_LastRecordedPos == newPos) return null;
-
-		//we record continuaslly that means wrapping around around the clip
-		int size = (newPos > _LastRecordedPos ?
-					newPos - _LastRecordedPos : _Clip.samples - _LastRecordedPos + newPos);
-
-		float[] fSamps = new float[size];
-		short[] sSamps = new short[size];
-		_Clip.GetData(fSamps, _LastRecordedPos);
-
-		DitherSamples(sSamps, fSamps);
-
-		if (isUpdatingPos)
-			_LastRecordedPos = newPos;
-
-		// calculate the RMS level
-
-		if (size > 0)
+		public void ResetUtteranceRMSLevels()
 		{
-			float sumSquaredSampleValues = SumOfSquaredValues(sSamps);
-			long numSampleValues = size;
-			float sampleRMSLevelSquared = sumSquaredSampleValues / numSampleValues;
-			SquaredVolumeHeuristic += sumSquaredSampleValues;
-			NumSamplesInVolume += numSampleValues;
-			float utteranceRMSLevelSquared = SquaredVolumeHeuristic / NumSamplesInVolume;
+			SquaredVolumeHeuristic = 0.0f;
+			NumSamplesInVolume = 0;
 		}
 
-
-		return sSamps;
-	}
-
-	// helper method to calculate sum of squares for use in determining average rms level of utterance
-	private float SumOfSquaredValues(short[] data)
-	{
-		float returnValue = 0.0f;
-		for (int i = 0; i < data.Length; i++)
+		//returns null if no new data. This sometimes happens since 
+		//the mic doesn't record every frame.
+		//isUpdatingPos should be false when calling from EndWork()
+		//this is to allow the other decoders to get the data when they are
+		//updated in Update()
+		private short[] GetNewRecordedAudio(bool isUpdatingPos = true)
 		{
-			returnValue += (float)data[i] * (float)data[i];
-		}
-		return returnValue;
-	}
+			int newPos = Microphone.GetPosition(null);
+			//Debug.Log("newPos: " + newPos);
+			if (_LastRecordedPos == newPos) return null;
 
-	//Dithers the samples. No error checking. length of each array must be the same
-	//dithers a 32bit float audio sample ([-1,1])
-	//into a 16bit short audio sample
-	private void DitherSamples(short[] sSamps, float[] fSamps)
-	{
-		float linVal;
-		float frac;
-		const float SHORT_MAX = (float)short.MaxValue;
-		for (int i = 0; i < sSamps.Length; ++i)
+			//we record continuaslly that means wrapping around around the clip
+			int size = (newPos > _LastRecordedPos ?
+						newPos - _LastRecordedPos : _Clip.samples - _LastRecordedPos + newPos);
+
+			float[] fSamps = new float[size];
+			short[] sSamps = new short[size];
+			_Clip.GetData(fSamps, _LastRecordedPos);
+
+			DitherSamples(sSamps, fSamps);
+
+			if (isUpdatingPos)
+				_LastRecordedPos = newPos;
+
+			// calculate the RMS level
+
+			if (size > 0)
+			{
+				float sumSquaredSampleValues = SumOfSquaredValues(sSamps);
+				long numSampleValues = size;
+				float sampleRMSLevelSquared = sumSquaredSampleValues / numSampleValues;
+				SquaredVolumeHeuristic += sumSquaredSampleValues;
+				NumSamplesInVolume += numSampleValues;
+				float utteranceRMSLevelSquared = SquaredVolumeHeuristic / NumSamplesInVolume;
+			}
+
+
+			return sSamps;
+		}
+
+		// helper method to calculate sum of squares for use in determining average rms level of utterance
+		private float SumOfSquaredValues(short[] data)
 		{
-			linVal = SHORT_MAX * fSamps[i];
-			frac = linVal - (int)linVal;
-			sSamps[i] = (short)(UnityEngine.Random.value < Mathf.Abs(frac) ? Mathf.Ceil(linVal) : Mathf.Floor(linVal));
+			float returnValue = 0.0f;
+			for (int i = 0; i < data.Length; i++)
+			{
+				returnValue += (float)data[i] * (float)data[i];
+			}
+			return returnValue;
 		}
-	}
 
-	public void UnInit()
-	{
-		Microphone.End(null);
-		_Me = null;
-	}
+		//Dithers the samples. No error checking. length of each array must be the same
+		//dithers a 32bit float audio sample ([-1,1])
+		//into a 16bit short audio sample
+		private void DitherSamples(short[] sSamps, float[] fSamps)
+		{
+			float linVal;
+			float frac;
+			const float SHORT_MAX = (float)short.MaxValue;
+			for (int i = 0; i < sSamps.Length; ++i)
+			{
+				linVal = SHORT_MAX * fSamps[i];
+				frac = linVal - (int)linVal;
+				sSamps[i] = (short)(UnityEngine.Random.value < Mathf.Abs(frac) ? Mathf.Ceil(linVal) : Mathf.Floor(linVal));
+			}
+		}
 
-	void OnDestroy()
-	{
-		UnInit();
+		public void UnInit()
+		{
+			Microphone.End(null);
+			_Me = null;
+		}
+
+		void OnDestroy()
+		{
+			UnInit();
+		}
 	}
 }

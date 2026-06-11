@@ -13,14 +13,13 @@
  * See THIRD_PARTY_LICENSES.txt for details.
  */
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
-using Sphinx;
+using Rrtf.Sphinx;
 using System.Text.RegularExpressions;
 using System;
 using System.Text;
 
-namespace SeaShells
+namespace Rrtf
 {
 
     /// <summary>

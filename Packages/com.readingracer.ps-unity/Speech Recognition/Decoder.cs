@@ -12,13 +12,9 @@
  * including PocketSphinx and SphinxBase, which are licensed separately.
  * See THIRD_PARTY_LICENSES.txt for details.
  */
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 using System;
-using UnityEngine.Analytics;
 
-namespace Sphinx
+namespace Rrtf.Sphinx
 {
 	using SphinxNative;
 	/// <summary>
