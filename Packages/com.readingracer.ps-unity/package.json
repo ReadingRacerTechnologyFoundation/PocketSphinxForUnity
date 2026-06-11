@@ -1,0 +1,15 @@
+{
+  "name": "com.readingracer.ps-unity",
+  "version": "1.0.0",
+  "displayName": "PocketSphinx For Unity",
+  "description": "Fast speech recognition that doesn't require an internet connection using \nCarnegie Mellon's PocketSphinx.",
+  "unity": "2022.3",
+  "author": {
+    "name": "Reading Racer Technology foundation",
+    "url": "https://github.com/ReadingRacerTechnologyFoundation/PocketSphinxForUnity",
+    "email": "seashells.edu@gmail.com"
+  },
+  "license": "GLGPL and BSD-2-Clause",
+  "documentationUrl": "https://github.com/ReadingRacerTechnologyFoundation/PocketSphinxForUnity/blob/main/README.md",
+  "licensesUrl": "https://github.com/ReadingRacerTechnologyFoundation/PocketSphinxForUnity/blob/main/LICENSE.txt"
+}

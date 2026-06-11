@@ -73,8 +73,9 @@ public class InitModelPaths : MonoBehaviour
 
     static InitModelPaths()
     {
-        modelFolder = "ModelData/ps_all_english/";//assumed to be in the streaming assets folder
-        //dictionaryPath = "lm/data01-02_sphinx-small-phoneset.dic";//assumed to be in the modelFolde
+        //assumed to be in the streaming assets folder. Must be in the streaming assets folder.
+        modelFolder = Path.Combine("ps-unity-modeldata", "ps_all_english");
+        //assumed to be in the model folder
         dictionaryPath = "lm/default_dictionary.dic";
 
         // 2015-05-14 change initial acoustic models to kid in order to see if the mic test bug switches to appearing on grownup models

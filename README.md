@@ -103,6 +103,8 @@ These files should not be committed. Add them to your `.gitignore`:
 ```gitignore
 tempFSG*
 tempFSGcloze*
+```
+
 🎬 Example Scenes
 
 The Examples folder contains two sample scenes demonstrating how to create and use
@@ -209,3 +211,9 @@ or unintended behavior.
 
 Contributions are welcome, but this project is maintained on a best-effort basis.
 No guarantees are made regarding response time or feature acceptance.
+
+# Reading Racer Technology Foundation
+Thank you for using PocketSphinx for Unity developed by 
+The Reading Racer Technology Foundation (RRTF). A non profit with the mission to promote and share Reading Racer’s speech engine and provide technical support to those building educational products.
+
+To learn more visit Reading Racer's [website](https://www.readingracer.com/).

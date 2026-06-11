@@ -98,7 +98,7 @@ namespace Sphinx
 		{
 			if(!System.IO.Directory.Exists(modelPath))
 			{
-				Debug.LogError("ERROR: Acoustic Mode folder does not exist: " + modelPath);
+				Debug.LogError("ERROR: Acoustic Model folder does not exist: " + modelPath);
 				return;
 			}
 			SB_CmdLn.cmd_ln_set_str_r (currentConfig, "-hmm", modelPath);
