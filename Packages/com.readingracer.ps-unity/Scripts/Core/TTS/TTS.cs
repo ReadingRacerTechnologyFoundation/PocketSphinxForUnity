@@ -155,7 +155,7 @@ namespace Rrtf
 		{
 			if (IsMuted || string.IsNullOrEmpty(sentence)) return;
 
-			string[] words = Rrtf.SeaShellsRecognizer.TextToWords(sentence);
+			string[] words = Rrtf.BasicFSGRecognizer.TextToWords(sentence);
 			System.Text.StringBuilder sb = new System.Text.StringBuilder(sentence.Length);
 
 			string txt;

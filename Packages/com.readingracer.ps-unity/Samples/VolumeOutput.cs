@@ -22,7 +22,7 @@ namespace Rrtf
         private UnityEngine.UI.Text _volumeText = null;
         [SerializeField]
         private UnityEngine.UI.Slider _slider = null;
-        private Rrtf.SeaShellsRecognizer _recognizer;
+        private Rrtf.BasicFSGRecognizer _recognizer;
         private UnityEngine.UI.Image _sliderFill;
         private float _maxHeardVolume = 1000;
         void Start()
@@ -30,7 +30,7 @@ namespace Rrtf
             _sliderFill = _slider.fillRect.GetComponent<UnityEngine.UI.Image>();
         }
 
-        public void SetRecognizer(Rrtf.SeaShellsRecognizer recognizer)
+        public void SetRecognizer(Rrtf.BasicFSGRecognizer recognizer)
         {
             _recognizer = recognizer;
         }

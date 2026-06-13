@@ -25,7 +25,7 @@ namespace Rrtf
     /// <summary>
     /// Sea shells recognizer. Specializes in using FSGs
     /// </summary>
-    public sealed class SeaShellsRecognizer : SpeechRecognizer
+    public sealed class BasicFSGRecognizer : SpeechRecognizer
     {
         public static readonly string LISTEN_FOR_SEARCH_NAME = "FSGSearchModePizza";
         public int WordIndex { get; private set; }
@@ -45,7 +45,7 @@ namespace Rrtf
         /// The defaultLmWeight is used on FSGs only
         /// </summary>
         /// <param name="defaultLmWeight">Default lm weight. must be between 0 and 9. Automatcily clamped</param>
-        public SeaShellsRecognizer(int defaultLmWeight, SpeechConfig config) : base(config)
+        public BasicFSGRecognizer(int defaultLmWeight, SpeechConfig config) : base(config)
         {
             this.logmath = new LogMath();
             this.LmModelWeight = Mathf.Clamp(defaultLmWeight, 0, 9);
@@ -87,11 +87,11 @@ namespace Rrtf
             bool setFSGsuccess = false;
             if (isCloze)
             {
-                setFSGsuccess = setFSGforCloze(SeaShellsRecognizer.LISTEN_FOR_SEARCH_NAME, searchWords, startIndex, lmModelWeight, forgivenessBalance, isCloze);
+                setFSGsuccess = setFSGforCloze(BasicFSGRecognizer.LISTEN_FOR_SEARCH_NAME, searchWords, startIndex, lmModelWeight, forgivenessBalance, isCloze);
             }
             else
             {
-                setFSGsuccess = setFSG(SeaShellsRecognizer.LISTEN_FOR_SEARCH_NAME, searchWords, startIndex, lmModelWeight, forgivenessBalance, isCloze);
+                setFSGsuccess = setFSG(BasicFSGRecognizer.LISTEN_FOR_SEARCH_NAME, searchWords, startIndex, lmModelWeight, forgivenessBalance, isCloze);
             }
 
             if (!setFSGsuccess)
@@ -104,6 +104,14 @@ namespace Rrtf
             this.WordIndex = startIndex;
 
             return wordSet;
+        }
+
+        /// <summary>
+        /// Enables the mic and sets the search. Calls SpeechRecognizer.Recognize internally. This will use the state setup by ListenFor
+        /// </summary>
+        public void EnableMicAndRecognize()
+        {
+            StartRecognizing(LISTEN_FOR_SEARCH_NAME);
         }
 
         //switching to precompiled regex for supposive 30% speed boost.

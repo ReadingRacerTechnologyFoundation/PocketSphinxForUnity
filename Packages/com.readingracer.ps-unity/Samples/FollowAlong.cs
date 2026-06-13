@@ -21,7 +21,7 @@ using UnityEngine.UI;
 namespace Rrtf
 {
 	/// <summary>
-	/// A simple example showing how to use the seashells recognizer. Which specializes in listening to sentences.
+	/// A simple example showing how to use the BasicFSGRecognizer. Which specializes in listening to sentences.
 	/// </summary>
 	public class FollowAlong : MonoBehaviour
 	{
@@ -45,11 +45,11 @@ namespace Rrtf
 		private Color _unreadColor = Color.gray;
 		private int _wordIndex = 0;
 		private string[] _searchWords;
-		public SeaShellsRecognizer Recognizer { get; private set; }
+		public BasicFSGRecognizer Recognizer { get; private set; }
 
 		IEnumerator Start()
 		{
-			_searchWords = SeaShellsRecognizer.TextToWords(_searchString);
+			_searchWords = BasicFSGRecognizer.TextToWords(_searchString);
 
 			//we need to make sure initModelPaths is done, just for android. 
 			//its best if InitModelPaths is placed in a preload scene first
@@ -60,7 +60,7 @@ namespace Rrtf
 			_initModelPathsTextObj.SetActive(false);
 
 			InitModelPaths.AMChoice = _accousticModel;
-			Recognizer = new SeaShellsRecognizer(InitModelPaths.DefaultLanguageModelWeight, CreateConfig());
+			Recognizer = new BasicFSGRecognizer(InitModelPaths.DefaultLanguageModelWeight, CreateConfig());
 			Recognizer.SpeechChanged += HandleSpeechEvents;
 			_unreadColor = _words[0].color;
 
@@ -84,7 +84,7 @@ namespace Rrtf
 
 			_readButton.GetComponent<Image>().color = Color.gray;
 			Recognizer.ListenFor(_searchString, InitModelPaths.DefaultLanguageModelWeight, _wordIndex, _foregivness, false);
-			Recognizer.StartRecognizing(SeaShellsRecognizer.LISTEN_FOR_SEARCH_NAME);
+			Recognizer.EnableMicAndRecognize();
 			Debug.Log("began listening");
 		}
 

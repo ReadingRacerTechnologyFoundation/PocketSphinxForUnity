@@ -22,7 +22,7 @@ using System.Collections.Generic;
 namespace Rrtf
 {
 	/// <summary>
-	/// A simple example showing how to use the seashells recognizer for cloze words.
+	/// A simple example showing how to use the BasicFSGRecognizer for words in any order.
 	/// cloze words can be said in any order
 	/// </summary>
 	public class FollowAlongRandomly : MonoBehaviour
@@ -49,11 +49,11 @@ namespace Rrtf
 		private string[] _searchWords;
 		private Dictionary<string, Text> _wordsToUI = new Dictionary<string, Text>();
 		private int _readWordsCount = 0;
-		public SeaShellsRecognizer Recognizer { get; private set; }
+		public BasicFSGRecognizer Recognizer { get; private set; }
 
 		IEnumerator Start()
 		{
-			_searchWords = SeaShellsRecognizer.TextToWords(_searchString);
+			_searchWords = BasicFSGRecognizer.TextToWords(_searchString);
 			for (int i = 0; i < _searchWords.Length; ++i)
 			{
 				_wordsToUI[_searchWords[i]] = _words[i];
@@ -69,7 +69,7 @@ namespace Rrtf
 			_initModelPathsTextObj.SetActive(false);
 
 			InitModelPaths.AMChoice = _accousticModel;
-			Recognizer = new SeaShellsRecognizer(InitModelPaths.DefaultLanguageModelWeight, CreateConfig());
+			Recognizer = new BasicFSGRecognizer(InitModelPaths.DefaultLanguageModelWeight, CreateConfig());
 			Recognizer.SpeechChanged += HandleSpeechEvents;
 			_unreadColor = _words[0].color;
 
@@ -94,7 +94,7 @@ namespace Rrtf
 			_readButton.GetComponent<Image>().color = Color.gray;
 			//set cloze to true for random order listening!
 			Recognizer.ListenFor(_searchString, InitModelPaths.DefaultLanguageModelWeight, 0, _foregivness, true);
-			Recognizer.StartRecognizing(SeaShellsRecognizer.LISTEN_FOR_SEARCH_NAME);
+			Recognizer.EnableMicAndRecognize();
 			Debug.Log("began listening");
 		}
 

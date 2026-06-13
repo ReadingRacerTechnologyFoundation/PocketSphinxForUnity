@@ -110,7 +110,7 @@ tempFSGcloze*
 The Examples folder contains two sample scenes demonstrating how to create and use
 Finite State Grammars (FSGs) for structured speech recognition.
 
-SeaShellsRecognizerExample
+RecognizeSentence.scene
 
 Demonstrates creating an FSG where:
 
@@ -118,7 +118,7 @@ Words must be spoken in a specific order
 
 Useful for guided reading or scripted prompts
 
-SeaShellsRecognizerRandomOrder
+RecognizeRandomWords.scene
 
 Demonstrates creating an FSG where:
 

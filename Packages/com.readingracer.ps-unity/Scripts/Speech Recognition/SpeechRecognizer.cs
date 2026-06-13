@@ -175,7 +175,6 @@ namespace Rrtf.Sphinx
 			}
 			
 			this.SetSearch(searchName);
-			TheDecoder.ResetDoublecheck (); // only double check a word once per sentence
 			SpeechRecognizer.worker.BeginWork(this.speechEvent,TheDecoder);
 			IsListening = true;
 		}
@@ -535,13 +534,7 @@ namespace Rrtf.Sphinx
 			public void BeginWork(SpeechEvent newSpeechEvent, Decoder newDecoder)
 			{
 				infoDict.Add(newDecoder, new RecognizerInfo(newSpeechEvent,newDecoder,false));
-
-				//change by Rod 12/19/2014. quick test setting for umang's visit.
-				//eventually RRGlobals.isRecognitionForgiving will be removed completely and instead rely
-				//on some other RRGlobals variables
-				//changed by Rod 1/21/2015. proper forgiveness level added to RRGlobals
-				//changed by Rod 1/30/2015. removed forgiveness level from rrglobals
-				newDecoder.StartUtterance(string.Empty);
+				newDecoder.StartUtterance();
 
 				if(IsDecoding)
 					return;
