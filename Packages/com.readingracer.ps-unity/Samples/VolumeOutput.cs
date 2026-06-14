@@ -12,6 +12,7 @@
  * including PocketSphinx and SphinxBase, which are licensed separately.
  * See THIRD_PARTY_LICENSES.txt for details.
  */
+using System;
 using UnityEngine;
 
 namespace Rrtf

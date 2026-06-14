@@ -42,13 +42,32 @@ namespace Rrtf
 		/// </summary>
 		public float NumSamplesInVolume { get; private set; }
 
+		/// <summary>
+		/// when calculating volume, we will only look at the last 3 seconds
+		/// </summary>
+		public float MaxVolumeSamplesSeconds
+		{
+			get => _maxVolumeSamplesSeconds;
+			set
+			{
+				_maxVolumeSamplesSeconds = Mathf.Max(0.1f, value);
+			}
+		}
+
 		private int _LastRecordedPos = 0;
 		private AudioClip _Clip;
 		private static MicController _Me;
+		private float _maxVolumeSamplesSeconds = 1.0f;
 
 		public const int SAMPLE_RATE = 16000;
 		private const string NAME = "MIC_CONTROLLER";
 
+		/// <summary>
+		/// This is a wrapper for Unity's Microphone.Start function. It will always wrap
+		/// and the sample rate will always be 16000.
+		/// </summary>
+		/// <param name="deviceName">the mic device you want to enable</param>
+		/// <param name="lengthSec">the number of seconds to record</param>
 		public static void Init(string deviceName, int lengthSec)
 		{
 			if (Instance != null)
@@ -114,12 +133,10 @@ namespace Rrtf
 
 			if (size > 0)
 			{
+				float maxVolumeSamples = SAMPLE_RATE * _maxVolumeSamplesSeconds;
 				float sumSquaredSampleValues = SumOfSquaredValues(sSamps);
-				long numSampleValues = size;
-				float sampleRMSLevelSquared = sumSquaredSampleValues / numSampleValues;
-				SquaredVolumeHeuristic += sumSquaredSampleValues;
-				NumSamplesInVolume += numSampleValues;
-				float utteranceRMSLevelSquared = SquaredVolumeHeuristic / NumSamplesInVolume;
+				SquaredVolumeHeuristic = (SquaredVolumeHeuristic * NumSamplesInVolume + sumSquaredSampleValues) / (NumSamplesInVolume + size);
+				NumSamplesInVolume = Mathf.Min(maxVolumeSamples, NumSamplesInVolume + size);
 			}
 
 
