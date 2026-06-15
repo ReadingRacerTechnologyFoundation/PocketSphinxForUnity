@@ -32,7 +32,8 @@ using System;
  **/
 namespace Rrtf.Sphinx
 {
-	using SphinxNative;
+    using System.IO;
+    using SphinxNative;
 
 	/// <summary>
 	/// Speech config. Use This to create a cmd_ln_t/SpeechConfig object.  In order to create a SpeechConfig object
@@ -100,6 +101,7 @@ namespace Rrtf.Sphinx
 				Debug.LogError("ERROR: Acoustic Model folder does not exist: " + modelPath);
 				return;
 			}
+			Debug.Log("ps-unity using am model: " + modelPath);
 			SB_CmdLn.cmd_ln_set_str_r (currentConfig, "-hmm", modelPath);
 		}
 
@@ -114,6 +116,7 @@ namespace Rrtf.Sphinx
 				Debug.LogError("ERROR: dict file does not exist: " + dicPath);
 				return;
 			}
+			Debug.Log("ps-unity using dictionary Path: " + dicPath);
 			SB_CmdLn.cmd_ln_set_str_r (currentConfig, "-dict", dicPath);
 		}
 
@@ -163,19 +166,19 @@ namespace Rrtf.Sphinx
 			#if UNITY_IOS || UNITY_ANDROID || UNITY_WP8
 			Debug.Log("Cannot create log file on mobile");
 			#else
-				
-			string path = Application.persistentDataPath + "/SphinxLogs/";
+			
+			Debug.Log("ps setting up ps logs");
+			string path = Path.Combine(Application.persistentDataPath,"SphinxLogs");
 			if(!System.IO.Directory.Exists(path))
 			{
 				System.IO.Directory.CreateDirectory(path);
+				Debug.Log("early out");
 				return;
 			}
 
-			path += DateTime.Now.Month + "-" + DateTime.Now.Day + "-" + DateTime.Now.Year + "  " + DateTime.Now.TimeOfDay + ".txt";
+			path = Path.Combine(path, $"Sphinx_{DateTime.Now:yyyyMMdd_HHmmss}.log");
 
-			System.IO.File.Create(path);
-
-			Debug.Log("Writing log fileto " + path);
+			Debug.Log("Writing PocketSphinx logs to " + path);
 			
 			SB_CmdLn.cmd_ln_set_str_r(currentConfig,"-logfn",path);
 			#endif

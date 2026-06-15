@@ -62,7 +62,7 @@ namespace Rrtf
 
 			//we need to make sure initModelPaths is done, just for android. 
 			//its best if InitModelPaths is placed in a preload scene first
-			while (!InitModelPaths.IsDoneFixingPaths)
+			while (!InitModelPaths.ArePathsFixed)
 			{
 				yield return null;
 			}
@@ -156,7 +156,9 @@ namespace Rrtf
 			SpeechConfig.SetFloat("-vad_threshold", VAD_THRESHOLD);
 			SpeechConfig.SetBoolean("-remove_silence", IS_REMOVING_SILENCE);
 			SpeechConfig.SetFloat("-fillprob", FILL_PROB);
-			//SpeechConfig.CreateLogFile(); I prefer to check the unity log instead
+			#if UNITY_STANDALONE_WIN || UNITY_STANDALONE_MAC
+				SpeechConfig.CreateLogFile(); //I prefer to check the unity log instead in editor
+			#endif
 
 			return SpeechConfig.GenerateConfigWithCurrentSettings();
 		}

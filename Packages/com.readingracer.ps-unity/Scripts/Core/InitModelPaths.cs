@@ -34,6 +34,13 @@ namespace Rrtf
     /// </summary>
     public class InitModelPaths : MonoBehaviour
     {
+        private static string modelFolder = Path.Combine("ps-unity-modeldata", "ps_all_english");//assumed to be in the streaming assets folder
+        private static string dictionaryPath = "lm/default_dictionary.dic";//assumed to be in the modelFolder
+        //ASSUMED TO BE IN THE MODELS FOLDER!!!
+        private const string ADULT_AM_FOLDER = "hmm/en-us-semi";
+        public static string CHILD_AM_FOLDER = "hmm/rrtraining_mmie01.ci_cont";
+
+
 
         public enum ACCOUSTIC_MODELS { ADULT = 0, CHILD = 1 }
 
@@ -65,90 +72,76 @@ namespace Rrtf
             get { return _amchoice; }
             set
             {
-                //Debug.Log("Changed AM CHOICE: " + value.ToString() + " which is actually a reference to " + CHILD_AM_FOLDER);
                 _amchoice = value;
-                updateAMFolder();
+                UpdateAMFolder();
+                Debug.Log("ps-unity. Updated AM Choice: " + accousticModelFolder);
             }
         }
-        private static ACCOUSTIC_MODELS _amchoice;
-        public static bool IsDoneFixingPaths { get; private set; }
-
-        static InitModelPaths()
-        {
-            //assumed to be in the streaming assets folder. Must be in the streaming assets folder.
-            modelFolder = Path.Combine("ps-unity-modeldata", "ps_all_english");
-            //assumed to be in the model folder
-            dictionaryPath = "lm/default_dictionary.dic";
-
-            // 2015-05-14 change initial acoustic models to kid in order to see if the mic test bug switches to appearing on grownup models
-            // AMChoice = ACCOUSTIC_MODELS.CHILD_CI; 
-            AMChoice = ACCOUSTIC_MODELS.ADULT;
-            IsDoneFixingPaths = false;
-        }
-
-        //ASSUMED TO BE IN THE MODELS FOLDER!!!
-        private const string ADULT_AM_FOLDER = "hmm/en-us-semi";
-        public static string CHILD_AM_FOLDER = "hmm/rrtraining_mmie01.ci_cont";
-
+        private static ACCOUSTIC_MODELS _amchoice = ACCOUSTIC_MODELS.ADULT;
+        public static bool ArePathsFixed { get; private set; }
         public static string ModelFolder
         {
             get
             {
-                if (arePathsFixed) return modelFolder;
-                else
-                {
 #if UNITY_EDITOR
-                    if (Application.isPlaying)
-                    {
-                        return Path.Combine(Application.streamingAssetsPath, modelFolder);
-                    }
-                    else
-                    {
-                        //won't ever happen since this isn't used outside of editor playing. 
-                        //used to fix compilation warnings and error from unity
-                        Debug.LogError("EMpty ModelFolder. should not happen");
-                        return string.Empty;
-                    }
-#else
-                return Path.Combine(Application.streamingAssetsPath, modelFolder);
-#endif
+                if (!ArePathsFixed)
+                {
+                    //we allow this in editor only so you can test easily in editor without having to call InitModelPaths.Awake()
+                    SetupCorrectedAssetPaths();
                 }
+#endif
+
+                if (!ArePathsFixed)
+                {
+                    Debug.LogError("ps-unity. Paths haven't been fixed. This will cause a crash in sphinx");
+                }
+
+                return modelFolder;
             }
         }
         public static string DictionaryPath
         {
             get
             {
-                if (arePathsFixed) return dictionaryPath;
-                else return Path.Combine(ModelFolder, dictionaryPath);
+#if UNITY_EDITOR
+                if (!ArePathsFixed)
+                {
+                    //we allow this in editor only so you can test easily in editor without having to call InitModelPaths.Awake()
+                    SetupCorrectedAssetPaths();
+                }
+#endif
+
+                if (!ArePathsFixed)
+                {
+                    Debug.LogError("ps-unity. Paths haven't been fixed. This will cause a crash in sphinx");
+                }
+
+                return dictionaryPath;
             }
         }
         public static string AccousticModelFolder
         {
             get
             {
-                if (arePathsFixed)
+#if UNITY_EDITOR
+                if (!ArePathsFixed)
                 {
-                    return accousticModelFolder;
+                    //we allow this in editor only so you can test easily in editor without having to call InitModelPaths.Awake()
+                    SetupCorrectedAssetPaths();
                 }
-                else return Path.Combine(ModelFolder, accousticModelFolder);
+#endif
+
+                if (!ArePathsFixed)
+                {
+                    Debug.LogError("ps-unity. Paths haven't been fixed. This will cause a crash in sphinx");
+                }
+
+                return accousticModelFolder;
             }
         }
 
-        //how much time do we wait before we load
-        [Tooltip("if you want to add a load delay")]
-        public float MinLoadDelay = 0;
-
-        private static string modelFolder;//assumed to be in the streaming assets folder
-        private static string dictionaryPath;//assumed to be in the modelFolde
-
         //updated automaticlly when am choice is changed
         private static string accousticModelFolder; //assumed to be in the modelFolder
-
-        /// <summary>
-        /// The are paths fixed. If the paths are fixed then there is no need for the accessors to fix them.
-        /// </summary>
-        private static bool arePathsFixed = false;
 
         /// <summary>
         /// The accoustic model file list. The name of the txt that holdes the 
@@ -159,50 +152,45 @@ namespace Rrtf
         private static string adultModelFileList = "AdultModelFileList";
 
         private static string childModelFileList = "ChildeModelFileList";
-        private float progress = 0f;
+
+        /// <summary>
+        /// Only used on android. Will return true if currently running the path fixing coroutine
+        /// </summary>
+        public static bool IsCurrentlyUpdatingPaths {get; private set;} = false;
 
         // Use this for initialization
         void Awake()
         {
             //why do i do this? Because Android is stupid. I need to know the folder names and such when I run
             //the createModelCacheForAndroid coroutine. BUt it doesnt matter for the rest
-#if UNITY_EDITOR || !UNITY_ANDROID
-            StartCoroutine(createPathsForDevices());
+#if UNITY_STANDALONE_ANDROID
+    StartCoroutine(createModelCacheForAndroid());
 #else
-		StartCoroutine(createModelCacheForAndroid());
+    SetupCorrectedAssetPaths();
 #endif
-            arePathsFixed = true;
         }
 
-        private IEnumerator createPathsForDevices()
+        private static void SetupCorrectedAssetPaths()
         {
-            IsDoneFixingPaths = false;
+            if (ArePathsFixed)
+            {
+                return;
+            }
+
+            UpdateAMFolder();
             modelFolder = Path.Combine(Application.streamingAssetsPath, modelFolder);
             dictionaryPath = Path.Combine(modelFolder, dictionaryPath);
-            Debug.Log("am path: " + accousticModelFolder);
             accousticModelFolder = Path.Combine(modelFolder, accousticModelFolder);
-
-            float timer = 0f;
-            while (timer < MinLoadDelay)
-            {
-                timer += Time.deltaTime;
-                progress = timer / MinLoadDelay;
-
-                yield return null;
-            }
-            yield return null;
-
-            IsDoneFixingPaths = true;
+            Debug.Log("ps-unity: paths fixed using modelFolder: " + modelFolder);
+            Debug.Log("ps-unity: am folder: " + accousticModelFolder);
+            
+            ArePathsFixed = true;
         }
 
         private string streamingassetspathtemp;
         private IEnumerator createModelCacheForAndroid()
         {
-            IsDoneFixingPaths = false;
-
-            //for the minimumLoadDelay
-            float timeStart = Time.timeSinceLevelLoad;
-
+            IsCurrentlyUpdatingPaths = true;
             string localModelPath = Path.Combine(Application.temporaryCachePath, modelFolder);
             //		if(Directory.Exists(localModelPath))
             //			Directory.Delete(localModelPath,true);
@@ -284,18 +272,8 @@ namespace Rrtf
             //float timeElapsed = Time.timeSinceLevelLoad - timeStart;
             //yield return new WaitForSeconds(Mathf.Max(0, MinLoadDelay - timeElapsed));
 
-
-            float timer = Time.timeSinceLevelLoad - timeStart;
-            while (timer < MinLoadDelay)
-            {
-                timer += Time.deltaTime;
-                progress = timer / MinLoadDelay;
-
-                yield return null;
-            }
-            yield return new WaitForSeconds(.25f);
-
-            IsDoneFixingPaths = true;
+            ArePathsFixed = true;
+            IsCurrentlyUpdatingPaths = false;
         }
 
         private IEnumerator copyAMFiles(string localModelPath, string folderName, string fileListtxt)
@@ -333,9 +311,14 @@ namespace Rrtf
             yield return null;
         }
 
-        private static void updateAMFolder()
+        private static void UpdateAMFolder()
         {
-            if (arePathsFixed)
+            if (IsCurrentlyUpdatingPaths)
+            {
+                Debug.LogError("ps-unity: can't change accoustic model if android is currently copying folder data");
+            }
+
+            if (ArePathsFixed)
             {
                 if (_amchoice == ACCOUSTIC_MODELS.ADULT)
                     accousticModelFolder = Path.Combine(modelFolder, InitModelPaths.ADULT_AM_FOLDER);
