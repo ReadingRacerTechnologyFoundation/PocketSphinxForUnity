@@ -30,7 +30,8 @@ using UnityEngine;
  **/
 namespace Rrtf.Sphinx
 {
-	using SphinxNative;
+    using System;
+    using SphinxNative;
 
 	/// <summary>
 	/// Wrapper for fsg_model_t. creates FSG model types used by SpeechRecognizer
@@ -90,7 +91,7 @@ namespace Rrtf.Sphinx
 				++j;
 			}
 
-			Debug.Log("Commands \n: " + commands);
+			Debug.Log("Commands:\n" + commands);
 			fsg_model_t model = SB_FsgModel.fsg_model_fromBuildStruct(fsg_builder_t.CreateBuilder(lineCount,perLine,commands),
 			                                                          logmath.RawLogMath, lw);
 

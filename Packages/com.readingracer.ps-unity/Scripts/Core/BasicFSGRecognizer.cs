@@ -81,7 +81,7 @@ namespace Rrtf
                 this.stopRecognizing();
 
             string[] searchWords = TextToWords(sentence);
-            lmModelWeight = Mathf.Clamp(0, 9, lmModelWeight);
+            lmModelWeight = Mathf.Clamp(lmModelWeight, 0, 9);
             startIndex = Mathf.Clamp(startIndex, 0, searchWords.Length - 1);
 
             bool setFSGsuccess = false;
@@ -270,27 +270,26 @@ namespace Rrtf
             double normPrExtraDistractorsAtCloze = PrForgivenessBalance / searchWords.Length;
             double PrSkipClozeWords = 1.0 - PrForgivenessBalance;
             double PrRestart = 1.0;
-            commands.AppendLine("FSG_BEGIN sentence");
-            commands.AppendLine("NUM_STATES " + state_count);
-            commands.AppendLine("START_STATE " + start_state);
-            commands.AppendLine("FINAL_STATE " + final_state);
+            //WARNING WE NEED TO USE .Append(\n) because the c++ code expencts \n not \r\n like it does for windews when you use AppendLine
+            commands.Append("FSG_BEGIN sentence").Append("\n");
+            commands.Append("NUM_STATES " + state_count).Append("\n");
+            commands.Append("START_STATE " + start_state).Append("\n");
+            commands.Append("FINAL_STATE " + final_state).Append("\n");
 
             for (int i = 0; i < searchWords.Length; i++)
             {
-                commands.AppendLine(AddFSGTransition(0, 1, normPrCorrectClozeWords, searchWords[i]));
+                commands.Append(AddFSGTransition(0, 1, normPrCorrectClozeWords, searchWords[i])).Append("\n");
             }
-            commands.AppendLine(AddFSGTransition(0, 0, normPrExtraDistractorsAtCloze, string.Empty)); // extra arc to go back
-            commands.AppendLine(AddFSGTransition(0, 1, PrSkipClozeWords, string.Empty));
+            commands.Append(AddFSGTransition(0, 0, normPrExtraDistractorsAtCloze, string.Empty)).Append("\n"); // extra arc to go back
+            commands.Append(AddFSGTransition(0, 1, PrSkipClozeWords, string.Empty)).Append("\n");
 
-            commands.AppendLine(AddFSGTransition(1, 0, PrRestart, string.Empty));
+            commands.Append(AddFSGTransition(1, 0, PrRestart, string.Empty)).Append("\n");
 
             // done writing the file
-            commands.AppendLine("FSG_END");
+            commands.Append("FSG_END").Append("\n").Append("\n");
 
             FsgModel model;
-
-
-#if UNITY_EDITOR
+#if UNITY_EDITOR && PS_UNITY_USE_FSG_FILE
             string fsgFileName = "tempFSGcloze";
             if (System.IO.File.Exists(fsgFileName))
                 System.IO.File.Delete(fsgFileName);
@@ -299,7 +298,6 @@ namespace Rrtf
 #else
 			model = FsgModel.CreatefromString(commands.ToString(),logmath,lmModelWeight);
 #endif
-
             return this.AddFSGModel(model, searchName);
         }
 
@@ -1310,10 +1308,11 @@ namespace Rrtf
             int start_state = startIndex;       // normally 0 for first, but can be anywhere
             int final_state = state_count - 1;
 
-            commands.AppendLine("FSG_BEGIN sentence");
-            commands.AppendLine("NUM_STATES " + state_count);
-            commands.AppendLine("START_STATE " + start_state);
-            commands.AppendLine("FINAL_STATE " + final_state);
+            //WARNING WE NEED TO USE .Append(\n) because the c++ code expencts \n not \r\n like it does for windews when you use AppendLine
+            commands.Append("FSG_BEGIN sentence").Append("\n");
+            commands.Append("NUM_STATES " + state_count).Append("\n");
+            commands.Append("START_STATE " + start_state).Append("\n");
+            commands.Append("FINAL_STATE " + final_state).Append("\n");
 
             // factor to normalize transition probabilities based on sentence length
             int n = searchWords.Length - 1;
@@ -1374,7 +1373,7 @@ namespace Rrtf
                     double normPrExtraDistractorsForFirstWord = PrExtraDistractorsForFirstWord / numFirstWordDistractors;
                     foreach (string distractor in firstWordDistractorsArray)
                     {
-                        commands.AppendLine(AddFSGTransition(i, i, normPrExtraDistractorsForFirstWord, distractor));
+                        commands.Append(AddFSGTransition(i, i, normPrExtraDistractorsForFirstWord, distractor)).Append("\n");
                     }
                 }
 
@@ -1386,15 +1385,15 @@ namespace Rrtf
                     PrSkipThisWord = PrSkipClozeWords;
                 }
 
-                commands.AppendLine(AddFSGTransition(i, i + 1, PrCorrectThisWord, searchWords[i]));
+                commands.Append(AddFSGTransition(i, i + 1, PrCorrectThisWord, searchWords[i])).Append("\n");
                 // and also add the anti-words
                 // 2015-12-07 if the word is more than two letters long and not THE 
                 if ((searchWords[i].Length > 2) && (searchWords[i].ToUpper() != "THE"))
                 {
-                    commands.AppendLine(AddFSGTransition(i, i, PrSkipReplacement, calculateNonsenseWord(searchWords[i])));
-                    commands.AppendLine(AddFSGTransition(i, i, PrSemiWord, calculateSemiWord(searchWords[i])));
-                    commands.AppendLine(AddFSGTransition(i, i, PrMaybeYesWord, calculateMaybeYesWord(searchWords[i])));
-                    commands.AppendLine(AddFSGTransition(i, i, PrMaybeYesNewVowelsWord, calculateMaybeYesNewVowelsWord(searchWords[i])));
+                    commands.Append(AddFSGTransition(i, i, PrSkipReplacement, calculateNonsenseWord(searchWords[i]))).Append("\n");
+                    commands.Append(AddFSGTransition(i, i, PrSemiWord, calculateSemiWord(searchWords[i]))).Append("\n");
+                    commands.Append(AddFSGTransition(i, i, PrMaybeYesWord, calculateMaybeYesWord(searchWords[i]))).Append("\n");
+                    commands.Append(AddFSGTransition(i, i, PrMaybeYesNewVowelsWord, calculateMaybeYesNewVowelsWord(searchWords[i]))).Append("\n");
                 }
 
                 if (PrEndEarly > PrEpsilon)
@@ -1402,7 +1401,7 @@ namespace Rrtf
                     //if this is not the last word of the sentence emit null word from transition from state i to the final state with probability PrEndEarly
                     if (i != final_state - 1)
                     {
-                        commands.AppendLine(AddFSGTransition(i, final_state, PrEndEarly, string.Empty));
+                        commands.Append(AddFSGTransition(i, final_state, PrEndEarly, string.Empty)).Append("\n");
                     }
                 }
 
@@ -1419,10 +1418,10 @@ namespace Rrtf
 
                         // 2016-03-01 split probability between START_ word and END_ word
                         //emit word i truncation for transition from state i to state i with probability PrTruncate
-                        commands.AppendLine(AddFSGTransition(i, i, PrTruncate / 2.0, startWord(searchWords[i])));
+                        commands.Append(AddFSGTransition(i, i, PrTruncate / 2.0, startWord(searchWords[i]))).Append("\n");
 
                         //emit word i truncation for transition from state i to i + 1 with probability PrResume
-                        commands.AppendLine(AddFSGTransition(i, i + 1, PrResume / 2.0, startWord(searchWords[i])));
+                        commands.Append(AddFSGTransition(i, i + 1, PrResume / 2.0, startWord(searchWords[i]))).Append("\n");
                     }
                     else
                     {
@@ -1443,10 +1442,10 @@ namespace Rrtf
 
                         // 2016-03-01 split probability between START_ word and END_ word
                         //emit word i truncation for transition from state i to state i with probability PrTruncate
-                        commands.AppendLine(AddFSGTransition(i, i, PrTruncate / 2.0, endWord(searchWords[i])));
+                        commands.Append(AddFSGTransition(i, i, PrTruncate / 2.0, endWord(searchWords[i])));
 
                         //emit word i truncation for transition from state i to i + 1 with probability PrResume
-                        commands.AppendLine(AddFSGTransition(i, i + 1, PrResume / 2.0, endWord(searchWords[i])));
+                        commands.Append(AddFSGTransition(i, i + 1, PrResume / 2.0, endWord(searchWords[i])));
                     }
                     else
                     {
@@ -1463,7 +1462,7 @@ namespace Rrtf
                     //if i <> 0 emit null word for jump from state i back to state 0 with probability PrRestart
                     if (i != 0)
                     {
-                        commands.AppendLine(AddFSGTransition(i, 0, PrRestart / n, string.Empty));
+                        commands.Append(AddFSGTransition(i, 0, PrRestart / n, string.Empty)).Append("\n");
 
                     }
                 }
@@ -1471,7 +1470,7 @@ namespace Rrtf
                 if (PrRepeat > PrEpsilon)
                 {
                     //emit word i for transition from state i to state i with probability PrRepeat
-                    commands.AppendLine(AddFSGTransition(i, i, PrRepeat / n, searchWords[i]));
+                    commands.Append(AddFSGTransition(i, i, PrRepeat / n, searchWords[i])).Append("\n");
                 }
 
                 if (PrJump > PrEpsilon)
@@ -1481,7 +1480,7 @@ namespace Rrtf
                     {
                         if (i != j)
                         {
-                            commands.AppendLine(AddFSGTransition(i, j, PrJump / n, string.Empty));
+                            commands.Append(AddFSGTransition(i, j, PrJump / n, string.Empty)).Append("\n");
                         }
                     }
                 }
@@ -1496,7 +1495,7 @@ namespace Rrtf
                         {
                             NormPrJumpBack = NormPrJumpBack / i;
                         }
-                        commands.AppendLine(AddFSGTransition(i, j, NormPrJumpBack, string.Empty));
+                        commands.Append(AddFSGTransition(i, j, NormPrJumpBack, string.Empty)).Append("\n");
                     }
                 }
 
@@ -1506,7 +1505,7 @@ namespace Rrtf
                     int iNext = i + 1;
                     if (iNext < state_count)
                     {
-                        commands.AppendLine(AddFSGTransition(i, iNext, PrSkipThisWord, string.Empty));
+                        commands.Append(AddFSGTransition(i, iNext, PrSkipThisWord, string.Empty)).Append("\n");
                     }
                 }
             }
@@ -1514,7 +1513,7 @@ namespace Rrtf
             if (PrRestart > PrEpsilon)
             {
                 // add jump from final state back to start with probability PrRestart
-                commands.AppendLine(AddFSGTransition(final_state, 0, PrRestart / n, string.Empty));
+                commands.Append(AddFSGTransition(final_state, 0, PrRestart / n, string.Empty)).Append("\n");
             }
 
 
@@ -1525,7 +1524,7 @@ namespace Rrtf
                 // add jump from final state back to each earlier state
                 for (int st = 1; st < state_count - 1; st++)
                 {
-                    commands.AppendLine(AddFSGTransition(final_state, st, PrJump / n, string.Empty));
+                    commands.Append(AddFSGTransition(final_state, st, PrJump / n, string.Empty)).Append("\n");
                 }
             }
 
@@ -1535,13 +1534,13 @@ namespace Rrtf
                 // add jump from final state back to each earlier state
                 for (int st = 1; st < state_count - 1; st++)
                 {
-                    commands.AppendLine(AddFSGTransition(final_state, st, PrJumpBack / n, string.Empty));
+                    commands.Append(AddFSGTransition(final_state, st, PrJumpBack / n, string.Empty)).Append("\n");
                 }
             }
 
 
             // done writing the file
-            commands.AppendLine("FSG_END");
+            commands.Append("FSG_END").Append("\n").Append("\n");
 
             FsgModel model;
 
@@ -1557,7 +1556,7 @@ namespace Rrtf
             // try lower value // five works okay at 0.375; 
             // was 9
             //Debug.Log ("Creating FSG with language model weight " + adjusted_lmModelWeight);
-#if UNITY_EDITOR
+#if UNITY_EDITOR && PS_UNITY_USE_FSG_FILE
             string fsgFileName = "tempFSG";
             if (System.IO.File.Exists(fsgFileName))
                 System.IO.File.Delete(fsgFileName);

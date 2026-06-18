@@ -100,6 +100,7 @@ Finite State Grammars:
 
 These files should not be committed. Add them to your `.gitignore`:
 
+PS_UNITY_USE_FSG_FILE
 ```gitignore
 tempFSG*
 tempFSGcloze*
