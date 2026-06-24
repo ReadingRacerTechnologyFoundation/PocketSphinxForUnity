@@ -87,11 +87,11 @@ namespace Rrtf
             bool setFSGsuccess = false;
             if (isCloze)
             {
-                setFSGsuccess = setFSGforCloze(BasicFSGRecognizer.LISTEN_FOR_SEARCH_NAME, searchWords, startIndex, lmModelWeight, forgivenessBalance, isCloze);
+                setFSGsuccess = setFSGforCloze(BasicFSGRecognizer.LISTEN_FOR_SEARCH_NAME, searchWords, startIndex, lmModelWeight, forgivenessBalance);
             }
             else
             {
-                setFSGsuccess = setFSG(BasicFSGRecognizer.LISTEN_FOR_SEARCH_NAME, searchWords, startIndex, lmModelWeight, forgivenessBalance, isCloze);
+                setFSGsuccess = setFSG(BasicFSGRecognizer.LISTEN_FOR_SEARCH_NAME, searchWords, startIndex, lmModelWeight, forgivenessBalance);
             }
 
             if (!setFSGsuccess)
@@ -211,7 +211,7 @@ namespace Rrtf
         /// <param name="searchWords">Search words.</param>
         /// <param name="startIndex">Start index of the words in searchWords</param>
         /// <param name="lmModelWeight">Lm model weight.</param>
-        private bool setFSGforCloze(string searchName, string[] searchWords, int startIndex, int lmModelWeight, double forgivenessBalance, bool containsCloze)
+        private bool setFSGforCloze(string searchName, string[] searchWords, int startIndex, int lmModelWeight, double forgivenessBalance)
         {
             if (forgivenessBalance < 0.01)
             {
@@ -271,22 +271,22 @@ namespace Rrtf
             double PrSkipClozeWords = 1.0 - PrForgivenessBalance;
             double PrRestart = 1.0;
             //WARNING WE NEED TO USE .Append(\n) because the c++ code expencts \n not \r\n like it does for windews when you use AppendLine
-            commands.Append("FSG_BEGIN sentence").Append("\n");
-            commands.Append("NUM_STATES " + state_count).Append("\n");
-            commands.Append("START_STATE " + start_state).Append("\n");
-            commands.Append("FINAL_STATE " + final_state).Append("\n");
+            commands.AppendNewline("FSG_BEGIN sentence");
+            commands.AppendNewline("NUM_STATES " + state_count);
+            commands.AppendNewline("START_STATE " + start_state);
+            commands.AppendNewline("FINAL_STATE " + final_state);
 
             for (int i = 0; i < searchWords.Length; i++)
             {
-                commands.Append(AddFSGTransition(0, 1, normPrCorrectClozeWords, searchWords[i])).Append("\n");
+                commands.AddFSGTransition(0, 1, normPrCorrectClozeWords, searchWords[i]);
             }
-            commands.Append(AddFSGTransition(0, 0, normPrExtraDistractorsAtCloze, string.Empty)).Append("\n"); // extra arc to go back
-            commands.Append(AddFSGTransition(0, 1, PrSkipClozeWords, string.Empty)).Append("\n");
+            commands.AddFSGTransition(0, 0, normPrExtraDistractorsAtCloze, string.Empty); // extra arc to go back
+            commands.AddFSGTransition(0, 1, PrSkipClozeWords, string.Empty);
 
-            commands.Append(AddFSGTransition(1, 0, PrRestart, string.Empty)).Append("\n");
+            commands.AddFSGTransition(1, 0, PrRestart, string.Empty);
 
-            // done writing the file
-            commands.Append("FSG_END").Append("\n").Append("\n");
+            // done writing the fsg. fsg must end with a new line otherwise crash
+            commands.AppendNewline("FSG_END");
 
             FsgModel model;
 #if UNITY_EDITOR && PS_UNITY_USE_FSG_FILE
@@ -1092,7 +1092,7 @@ namespace Rrtf
         /// <param name="searchWords">Search words.</param>
         /// <param name="startIndex">Start index of the words in searchWords</param>
         /// <param name="lmModelWeight">Lm model weight.</param>
-        private bool setFSG(string searchName, string[] searchWords, int startIndex, int lmModelWeight, double forgivenessBalance, bool containsCloze)
+        private bool setFSG(string searchName, string[] searchWords, int startIndex, int lmModelWeight, double forgivenessBalance)
         {
 
             //hotfix by Rod 1/31/2015. setting the forgiveness to 0 causes a crash due to failing to create the fsg
@@ -1116,26 +1116,6 @@ namespace Rrtf
                 forgivenessBalance = renormedForgivenessArray[fbIndex];
                 //Debug.Log ("forgivenessBalance of " + originalForgivenessBalance.ToString() + "renormed using base10 to " + forgivenessBalance.ToString ());
             }
-
-
-
-
-            // Debug.Log ("setFSG - startWordPronuciationForNumber 3 - " + startWordPronunciationForNumber("3"));
-            // Debug.Log ("setFSG - startWordPronuciationForNumber 24 - " + startWordPronunciationForNumber("24"));
-            // Debug.Log ("setFSG - startWordPronuciationForNumber 523 - " + startWordPronunciationForNumber("523"));
-            // Debug.Log ("setFSG - startWordPronuciationForNumber 1066 - " + startWordPronunciationForNumber("1066"));
-            // Debug.Log ("setFSG - startWordPronuciationForNumber 1776 - " + startWordPronunciationForNumber("1776"));
-            // Debug.Log ("setFSG - startWordPronuciationForNumber 1865 - " + startWordPronunciationForNumber("1865"));
-            // Debug.Log ("setFSG - startWordPronuciationForNumber 1984 - " + startWordPronunciationForNumber("1984"));
-            // Debug.Log ("setFSG - startWordPronuciationForNumber 2015 - " + startWordPronunciationForNumber("2015"));
-            // Debug.Log ("setFSG - startWordPronuciationForNumber 2100 - " + startWordPronunciationForNumber("2100"));
-            // Debug.Log ("setFSG - startWordPronuciationForNumber 3421 - " + startWordPronunciationForNumber("3421"));
-            // Debug.Log ("setFSG - startWordPronuciationForNumber 4532 - " + startWordPronunciationForNumber("4532"));
-
-            //Debug.Log ("setFSG - forgivenessBalance is set to " + forgivenessBalance);
-            // string testWord = "MOZZARELLA"; 
-            // string testWordPron = startWordCalculatePronunciation (testWord); // calculate truncation such as EH L AH F 
-            // Debug.Log ("calculated pronunciation for START_" + testWord + " " + testWordPron); 
 
             HashSet<string> uniques = new HashSet<string>(searchWords);
 
@@ -1279,8 +1259,6 @@ namespace Rrtf
             double PrCorrect = PrForgivenessBalance; // 0.5;	
 
             double PrCorrectEasyWords = 3.0 * (PrForgivenessBalance / 4.0); // change to 0.375 for revision 2037 // build // 2.0 * (PrForgivenessBalance / 4.0); // 0.25;		
-            double PrCorrectClozeWords = 4.0 * (PrForgivenessBalance / 4.0); // 0.25; 
-            double PrEndEarly = 0.00000;
             double PrTruncate = 1.0 * (1.0 - PrForgivenessBalance) / 12.0; // 0.05;
             double PrResume = 2.0 * (1.0 - PrForgivenessBalance) / 12.0; // 0.1;
                                                                          // double PrRestart = 1.0 * (1.0 - PrForgivenessBalance) / 12.0; // 0.05;   // need PrRestart even in race mode, to allow player to recover from a missed word 
@@ -1293,13 +1271,9 @@ namespace Rrtf
 
             double PrJumpBack = 1.0 * (1.0 - PrForgivenessBalance) / 12.0; // 0.05;  // also need to jump back (but not forward) in race mode, here to allow a player to recover from several missed words 
             double PrRepeat = (1.0 * PrForgivenessBalance) / 4.0; // 1.0 * (1.0 - PrForgivenessBalance) / 12.0; // 0.05; // the repeat should be based on PrForgiveness, not 1 - PrForgiveness
-            double PrJump = 0.0000;
-            // double PrSkip = 6.0 * (1.0 - PrForgivenessBalance) / 12.0; // 0.3; //  0.2; 			
-            // double PrSkipEasyWords = 6.0 * (1.0 - PrCorrectEasyWords) / 12.0; // 0.45; 		
-            // double PrSkipClozeWords = 6.0 * (1.0 - PrCorrectClozeWords) / 12.0; // 0.45; 
+
             double PrSkip = 1.0 * (1.0 - PrForgivenessBalance) / 12.0; // 0.3; //  0.2; 			
             double PrSkipEasyWords = 1.0 * (1.0 - PrCorrectEasyWords) / 12.0; // 0.45; 		
-            double PrSkipClozeWords = 1.0 * (1.0 - PrCorrectClozeWords) / 12.0; // 0.45; 
 
             // double PrExtraDistractorsForFirstWord = 2.0 * (1.0 - PrForgivenessBalance) / 12.0;
 
@@ -1309,10 +1283,10 @@ namespace Rrtf
             int final_state = state_count - 1;
 
             //WARNING WE NEED TO USE .Append(\n) because the c++ code expencts \n not \r\n like it does for windews when you use AppendLine
-            commands.Append("FSG_BEGIN sentence").Append("\n");
-            commands.Append("NUM_STATES " + state_count).Append("\n");
-            commands.Append("START_STATE " + start_state).Append("\n");
-            commands.Append("FINAL_STATE " + final_state).Append("\n");
+            commands.AppendNewline("FSG_BEGIN sentence");
+            commands.AppendNewline("NUM_STATES " + state_count);
+            commands.AppendNewline("START_STATE " + start_state);
+            commands.AppendNewline("FINAL_STATE " + final_state);
 
             // factor to normalize transition probabilities based on sentence length
             int n = searchWords.Length - 1;
@@ -1325,24 +1299,16 @@ namespace Rrtf
                 // emit word i for transition from state i to i + 1 with probability PrCorrect
                 double PrCorrectThisWord = PrCorrect;
                 double PrSkipThisWord = PrSkip;
-                // if ((searchWords[i].Length < 3) || searchWords[i].Equals("the", System.StringComparison.OrdinalIgnoreCase)) {
-                // Greg 2/2/2015 in order not to case false rejections on A,B,C,D,... and 1,2,3, ... 
-                //      change from any item of length less than three to just a fixed list 
+
                 if (searchWords[i].Equals("a", System.StringComparison.OrdinalIgnoreCase)
                     || searchWords[i].Equals("an", System.StringComparison.OrdinalIgnoreCase)
                     || searchWords[i].Equals("I", System.StringComparison.OrdinalIgnoreCase)
-                    // 2015-03-12 Greg take out "in" and "of" from the easy words list to adjust for children's acoustic models
-                    // || searchWords [i].Equals ("in", System.StringComparison.OrdinalIgnoreCase)
-                    // || searchWords [i].Equals ("of", System.StringComparison.OrdinalIgnoreCase)
                     )
-                { // 2017-03-05 Greg take out The from easy words || searchWords [i].Equals ("the", System.StringComparison.OrdinalIgnoreCase)) {
+                {
                     PrCorrectThisWord = PrCorrectEasyWords;
                     PrSkipThisWord = PrSkipEasyWords;
                     PrSkipThisWord += PrTruncate; // no truncations for very short words, add these back in
                 }
-
-                // special treatment for "E" after "D" as in the story "ABCs"
-                // essentially no chance of skipping the E
                 if ((i > 0) && searchWords[i - 1].Equals("d", System.StringComparison.OrdinalIgnoreCase)
                     && searchWords[i].Equals("e", System.StringComparison.OrdinalIgnoreCase))
                 {
@@ -1373,36 +1339,19 @@ namespace Rrtf
                     double normPrExtraDistractorsForFirstWord = PrExtraDistractorsForFirstWord / numFirstWordDistractors;
                     foreach (string distractor in firstWordDistractorsArray)
                     {
-                        commands.Append(AddFSGTransition(i, i, normPrExtraDistractorsForFirstWord, distractor)).Append("\n");
+                        commands.AddFSGTransition(i, i, normPrExtraDistractorsForFirstWord, distractor);
                     }
                 }
 
-                // override for cloze words - words n, n-1, n-2
-                if ((containsCloze == true) && (i > state_count - 5))
-                {
-                    Debug.Log("Setting PrCorrect lower for cloze word alternate answer" + searchWords[i]);
-                    PrCorrectThisWord = PrCorrectClozeWords;
-                    PrSkipThisWord = PrSkipClozeWords;
-                }
-
-                commands.Append(AddFSGTransition(i, i + 1, PrCorrectThisWord, searchWords[i])).Append("\n");
+                commands.AddFSGTransition(i, i + 1, PrCorrectThisWord, searchWords[i]);
                 // and also add the anti-words
                 // 2015-12-07 if the word is more than two letters long and not THE 
                 if ((searchWords[i].Length > 2) && (searchWords[i].ToUpper() != "THE"))
                 {
-                    commands.Append(AddFSGTransition(i, i, PrSkipReplacement, calculateNonsenseWord(searchWords[i]))).Append("\n");
-                    commands.Append(AddFSGTransition(i, i, PrSemiWord, calculateSemiWord(searchWords[i]))).Append("\n");
-                    commands.Append(AddFSGTransition(i, i, PrMaybeYesWord, calculateMaybeYesWord(searchWords[i]))).Append("\n");
-                    commands.Append(AddFSGTransition(i, i, PrMaybeYesNewVowelsWord, calculateMaybeYesNewVowelsWord(searchWords[i]))).Append("\n");
-                }
-
-                if (PrEndEarly > PrEpsilon)
-                {
-                    //if this is not the last word of the sentence emit null word from transition from state i to the final state with probability PrEndEarly
-                    if (i != final_state - 1)
-                    {
-                        commands.Append(AddFSGTransition(i, final_state, PrEndEarly, string.Empty)).Append("\n");
-                    }
+                    commands.AddFSGTransition(i, i, PrSkipReplacement, calculateNonsenseWord(searchWords[i]));
+                    commands.AddFSGTransition(i, i, PrSemiWord, calculateSemiWord(searchWords[i]));
+                    commands.AddFSGTransition(i, i, PrMaybeYesWord, calculateMaybeYesWord(searchWords[i]));
+                    commands.AddFSGTransition(i, i, PrMaybeYesNewVowelsWord, calculateMaybeYesNewVowelsWord(searchWords[i]));
                 }
 
                 // truncations not yet implemented for words not in dictionary
@@ -1418,10 +1367,10 @@ namespace Rrtf
 
                         // 2016-03-01 split probability between START_ word and END_ word
                         //emit word i truncation for transition from state i to state i with probability PrTruncate
-                        commands.Append(AddFSGTransition(i, i, PrTruncate / 2.0, startWord(searchWords[i]))).Append("\n");
+                        commands.AddFSGTransition(i, i, PrTruncate / 2.0, startWord(searchWords[i]));
 
                         //emit word i truncation for transition from state i to i + 1 with probability PrResume
-                        commands.Append(AddFSGTransition(i, i + 1, PrResume / 2.0, startWord(searchWords[i]))).Append("\n");
+                        commands.AddFSGTransition(i, i + 1, PrResume / 2.0, startWord(searchWords[i]));
                     }
                     else
                     {
@@ -1442,10 +1391,10 @@ namespace Rrtf
 
                         // 2016-03-01 split probability between START_ word and END_ word
                         //emit word i truncation for transition from state i to state i with probability PrTruncate
-                        commands.Append(AddFSGTransition(i, i, PrTruncate / 2.0, endWord(searchWords[i])));
+                        commands.AddFSGTransition(i, i, PrTruncate / 2.0, endWord(searchWords[i]));
 
                         //emit word i truncation for transition from state i to i + 1 with probability PrResume
-                        commands.Append(AddFSGTransition(i, i + 1, PrResume / 2.0, endWord(searchWords[i])));
+                        commands.AddFSGTransition(i, i + 1, PrResume / 2.0, endWord(searchWords[i]));
                     }
                     else
                     {
@@ -1462,7 +1411,7 @@ namespace Rrtf
                     //if i <> 0 emit null word for jump from state i back to state 0 with probability PrRestart
                     if (i != 0)
                     {
-                        commands.Append(AddFSGTransition(i, 0, PrRestart / n, string.Empty)).Append("\n");
+                        commands.AddFSGTransition(i, 0, PrRestart / n, string.Empty);
 
                     }
                 }
@@ -1470,19 +1419,7 @@ namespace Rrtf
                 if (PrRepeat > PrEpsilon)
                 {
                     //emit word i for transition from state i to state i with probability PrRepeat
-                    commands.Append(AddFSGTransition(i, i, PrRepeat / n, searchWords[i])).Append("\n");
-                }
-
-                if (PrJump > PrEpsilon)
-                {
-                    // emit null word for jump from state i to state j with probability PrJump for all states j except state 0
-                    for (int j = 1; j < state_count - 1; j++)
-                    {
-                        if (i != j)
-                        {
-                            commands.Append(AddFSGTransition(i, j, PrJump / n, string.Empty)).Append("\n");
-                        }
-                    }
+                    commands.AddFSGTransition(i, i, PrRepeat / n, searchWords[i]);
                 }
 
                 if (PrJumpBack > PrEpsilon)
@@ -1495,7 +1432,7 @@ namespace Rrtf
                         {
                             NormPrJumpBack = NormPrJumpBack / i;
                         }
-                        commands.Append(AddFSGTransition(i, j, NormPrJumpBack, string.Empty)).Append("\n");
+                        commands.AddFSGTransition(i, j, NormPrJumpBack, string.Empty);
                     }
                 }
 
@@ -1505,7 +1442,7 @@ namespace Rrtf
                     int iNext = i + 1;
                     if (iNext < state_count)
                     {
-                        commands.Append(AddFSGTransition(i, iNext, PrSkipThisWord, string.Empty)).Append("\n");
+                        commands.AddFSGTransition(i, iNext, PrSkipThisWord, string.Empty);
                     }
                 }
             }
@@ -1513,19 +1450,7 @@ namespace Rrtf
             if (PrRestart > PrEpsilon)
             {
                 // add jump from final state back to start with probability PrRestart
-                commands.Append(AddFSGTransition(final_state, 0, PrRestart / n, string.Empty)).Append("\n");
-            }
-
-
-            // when setting parameters, probably want to use either the PrJump or PrJumpBack, not both
-            // use the jump probability
-            if (PrJump > PrEpsilon)
-            {
-                // add jump from final state back to each earlier state
-                for (int st = 1; st < state_count - 1; st++)
-                {
-                    commands.Append(AddFSGTransition(final_state, st, PrJump / n, string.Empty)).Append("\n");
-                }
+                commands.AddFSGTransition(final_state, 0, PrRestart / n, string.Empty);
             }
 
             // use the jump back probability
@@ -1534,13 +1459,13 @@ namespace Rrtf
                 // add jump from final state back to each earlier state
                 for (int st = 1; st < state_count - 1; st++)
                 {
-                    commands.Append(AddFSGTransition(final_state, st, PrJumpBack / n, string.Empty)).Append("\n");
+                    commands.AddFSGTransition(final_state, st, PrJumpBack / n, string.Empty);
                 }
             }
 
 
-            // done writing the file
-            commands.Append("FSG_END").Append("\n").Append("\n");
+            // done writing the fsg. fsg must end with a new line otherwise crash
+            commands.AppendNewline("FSG_END");
 
             FsgModel model;
 
@@ -1550,12 +1475,6 @@ namespace Rrtf
                 Debug.Log("adjusting language model weight for sentence reading case");
                 adjusted_lmModelWeight = 6;
             }
-            // six seems fine at 0.375   
-            // four is too low, result is way too strict at 0.375; 
-            // two is too low, result is way too strict at 0.375; 
-            // try lower value // five works okay at 0.375; 
-            // was 9
-            //Debug.Log ("Creating FSG with language model weight " + adjusted_lmModelWeight);
 #if UNITY_EDITOR && PS_UNITY_USE_FSG_FILE
             string fsgFileName = "tempFSG";
             if (System.IO.File.Exists(fsgFileName))
@@ -1568,7 +1487,7 @@ namespace Rrtf
 
             return this.AddFSGModel(model, searchName);
         }
-        //helper function
+
         private static string startWord(string word)
         {
             return "START_" + word;
@@ -1577,12 +1496,6 @@ namespace Rrtf
         private static string endWord(string word)
         {
             return "END_" + word;
-        }
-
-        //helper function for AddFSG
-        private string AddFSGTransition(int from, int to, double prob, string word)
-        {
-            return "TRANSITION " + from + " " + to + " " + prob + " " + word;
         }
     }//end seashellsrecognizer
 

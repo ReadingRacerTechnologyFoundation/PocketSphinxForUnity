@@ -57,7 +57,7 @@ namespace Rrtf
 		private int _LastRecordedPos = 0;
 		private AudioClip _Clip;
 		private static MicController _Me;
-		private float _maxVolumeSamplesSeconds = 1.0f;
+		private float _maxVolumeSamplesSeconds = 0.25f;
 
 		public const int SAMPLE_RATE = 16000;
 		private const string NAME = "MIC_CONTROLLER";
