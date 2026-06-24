@@ -27,9 +27,10 @@ namespace Rrtf
     /// </summary>
     public sealed class BasicFSGRecognizer : SpeechRecognizer
     {
-        public static readonly string LISTEN_FOR_SEARCH_NAME = "FSGSearchModePizza";
+        public static readonly string LISTEN_FOR_SEARCH_NAME = "DefaultFsgListenFor";
+        public const int MIN_LANGUAGE_MODEL_WEIGHT = 0;
+		public const int MAX_LANGUAGE_MODEL_WEIGHT = 9;
         public int WordIndex { get; private set; }
-        public bool UseLag { get; set; } //currently unused since it didn't work well in earlier demos
 
         private readonly LogMath logmath;
         private readonly int LmModelWeight = 0;
@@ -44,12 +45,11 @@ namespace Rrtf
         /// Initializes a new instance of the <see cref="SeaShells.SeaShellsRecognizer"/> class.
         /// The defaultLmWeight is used on FSGs only
         /// </summary>
-        /// <param name="defaultLmWeight">Default lm weight. must be between 0 and 9. Automatcily clamped</param>
+        /// <param name="defaultLmWeight">Default language model weight. must be between 0 and 9. Automatcily clamped</param>
         public BasicFSGRecognizer(int defaultLmWeight, SpeechConfig config) : base(config)
         {
             this.logmath = new LogMath();
-            this.LmModelWeight = Mathf.Clamp(defaultLmWeight, 0, 9);
-            this.UseLag = false;
+            this.LmModelWeight = Mathf.Clamp(defaultLmWeight, MIN_LANGUAGE_MODEL_WEIGHT, MAX_LANGUAGE_MODEL_WEIGHT);
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace Rrtf
                 this.stopRecognizing();
 
             string[] searchWords = TextToWords(sentence);
-            lmModelWeight = Mathf.Clamp(lmModelWeight, 0, 9);
+            lmModelWeight = Mathf.Clamp(lmModelWeight, MIN_LANGUAGE_MODEL_WEIGHT, MAX_LANGUAGE_MODEL_WEIGHT);
             startIndex = Mathf.Clamp(startIndex, 0, searchWords.Length - 1);
 
             bool setFSGsuccess = false;
