@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>BuildMachineOSBuild</key>
-	<string>19F101</string>
+	<string>25F80</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
 	<string>sphinxall</string>
 	<key>CFBundleIdentifier</key>
-	<string>SeaShells.sphinxall</string>
+	<string>com.readingracer.sphinxall</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -47,19 +47,21 @@
 	<key>DTCompiler</key>
 	<string>com.apple.compilers.llvm.clang.1_0</string>
 	<key>DTPlatformBuild</key>
-	<string>11C504</string>
+	<string>25F70</string>
+	<key>DTPlatformName</key>
+	<string>macosx</string>
 	<key>DTPlatformVersion</key>
-	<string>GM</string>
+	<string>26.5</string>
 	<key>DTSDKBuild</key>
-	<string>19B90</string>
+	<string>25F70</string>
 	<key>DTSDKName</key>
-	<string>macosx10.15</string>
+	<string>macosx26.5</string>
 	<key>DTXcode</key>
-	<string>1130</string>
+	<string>2650</string>
 	<key>DTXcodeBuild</key>
-	<string>11C504</string>
+	<string>17F42</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.9</string>
+	<string>11.0</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2014 SeaShells. All rights reserved.</string>
 </dict>

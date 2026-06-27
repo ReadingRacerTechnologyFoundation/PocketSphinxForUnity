@@ -28,6 +28,7 @@ namespace Rrtf
 
 		public static bool IsInited { get; private set; }
 		public static MicController Instance { get { return _Me; } }
+		public string MicDevice {get; private set;}
 
 		//last audio samples taken. Might be null.
 		public short[] AudioSamples { get; private set; }
@@ -77,7 +78,24 @@ namespace Rrtf
 			}
 
 			_Me = (new GameObject(NAME)).AddComponent<MicController>();
-			_Me._Clip = Microphone.Start(null, true, lengthSec, SAMPLE_RATE);
+			_Me._Clip = Microphone.Start(deviceName, true, lengthSec, SAMPLE_RATE);
+			_Me.MicDevice = deviceName;
+
+			//find the default device
+			if (string.IsNullOrEmpty(deviceName))
+			{
+				string tempDevice = "error finding device";
+				foreach(string n in Microphone.devices)
+				{
+					if (Microphone.IsRecording(n))
+					{
+						tempDevice = n;
+						break;
+					}
+				}
+
+				_Me.MicDevice = tempDevice;
+			}
 		}
 
 		// Update is called once per frame

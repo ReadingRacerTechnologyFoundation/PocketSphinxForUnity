@@ -14,7 +14,6 @@
  */
 using System.Collections;
 using UnityEngine;
-using Rrtf;
 using Rrtf.Sphinx;
 using UnityEngine.UI;
 
@@ -38,6 +37,8 @@ namespace Rrtf
 		private Transform _readButton = null;
 		[SerializeField]
 		private GameObject _initModelPathsTextObj = null;
+		[SerializeField]
+		private Text _micDevice = null;
 		[SerializeField]
 		private Text[] _words = new Text[7];
 
@@ -68,6 +69,16 @@ namespace Rrtf
 			if (vo)
 			{
 				vo.SetRecognizer(Recognizer);
+			}
+
+			if (_micDevice)
+			{
+				//wait for mic controller to become initialized
+				while(MicController.Instance == null)
+				{
+					yield return null;
+				}
+				_micDevice.text = "Mic: " + MicController.Instance.MicDevice;
 			}
 		}
 

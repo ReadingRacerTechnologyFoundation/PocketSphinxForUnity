@@ -36,6 +36,8 @@ namespace Rrtf.Editor
                 SessionState.SetBool(IsSetupKey, true);
             }
         }
+
+        // [MenuItem("GameObject/TestPSUnity")]
         private static void Setup()
         {
             Debug.Log("ps-unity setup running");
@@ -48,15 +50,16 @@ namespace Rrtf.Editor
 
         private static void StreamingAssetsSetup(string packagePath)
         {
-            Debug.Log(packagePath);
             string modelPath = Path.Combine(packagePath, "Dependencies~", "ModelData");
             
-            // // Target path in the user's project
+            // Target path in the user's project
             string targetPath = Path.Combine(Application.streamingAssetsPath, "ps-unity-modeldata");
 
             if (Directory.Exists(modelPath))
             {
-                if (!Directory.Exists(targetPath))
+
+                //meta files might get added so we just gotta make sure that there's actually stuff in that folder
+                if (!Directory.Exists(targetPath) || (Directory.GetFiles(targetPath).Length == 0))
                 {
                     Directory.CreateDirectory(targetPath);
                     CopyFilesRecursively(modelPath, targetPath);
