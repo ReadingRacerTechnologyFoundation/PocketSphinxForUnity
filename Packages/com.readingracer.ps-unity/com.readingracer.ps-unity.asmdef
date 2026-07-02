@@ -2,7 +2,16 @@
     "name": "com.readingracer.ps-unity",
     "rootNamespace": "",
     "references": [],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Android",
+        "Editor",
+        "iOS",
+        "macOSStandalone",
+        "WSA",
+        "VisionOS",
+        "WindowsStandalone64",
+        "GameCoreScarlett"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

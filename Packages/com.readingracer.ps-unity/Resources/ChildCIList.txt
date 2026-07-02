@@ -1,7 +1,0 @@
-.DS_Store
-listen1.ci.mdef
-mdef
-means
-mixture_weights
-transition_matrices
-variances

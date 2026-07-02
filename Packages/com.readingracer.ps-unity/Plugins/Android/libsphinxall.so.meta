@@ -1,46 +1,51 @@
 fileFormatVersion: 2
-guid: bab27a9f028ef48dbb2e04af1666048d
-timeCreated: 1432662454
-licenseType: Pro
+guid: dd2c020ce82ee49768f062d4cd9e138d
 PluginImporter:
-  serializedVersion: 1
+  externalObjects: {}
+  serializedVersion: 3
   iconMap: {}
   executionOrder: {}
+  defineConstraints: []
   isPreloaded: 0
+  isOverridable: 1
+  isExplicitlyReferenced: 0
+  validateReferences: 1
   platformData:
     Android:
       enabled: 1
       settings:
-        CPU: x86
+        AndroidLibraryDependee: UnityLibrary
+        AndroidSharedLibraryType: Symbol
+        CPU: ARM64
+        Is16KbAligned: true
     Any:
       enabled: 0
-      settings: {}
+      settings:
+        Exclude Android: 0
+        Exclude Editor: 1
+        Exclude Linux64: 1
+        Exclude OSXUniversal: 1
+        Exclude Win: 1
+        Exclude Win64: 1
+        Exclude iOS: 1
     Editor:
       enabled: 0
       settings:
         CPU: AnyCPU
         DefaultValueInitialized: true
         OS: AnyOS
-    Linux:
-      enabled: 0
-      settings:
-        CPU: x86
     Linux64:
       enabled: 0
       settings:
-        CPU: x86_64
-    OSXIntel:
-      enabled: 0
-      settings:
         CPU: AnyCPU
-    OSXIntel64:
+    OSXUniversal:
       enabled: 0
       settings:
         CPU: AnyCPU
     Win:
       enabled: 0
       settings:
-        CPU: AnyCPU
+        CPU: None
     Win64:
       enabled: 0
       settings:
@@ -48,6 +53,8 @@ PluginImporter:
     iOS:
       enabled: 0
       settings:
+        AddToEmbeddedBinaries: false
+        CPU: AnyCPU
         CompileFlags: 
         FrameworkDependencies: 
   userData: 

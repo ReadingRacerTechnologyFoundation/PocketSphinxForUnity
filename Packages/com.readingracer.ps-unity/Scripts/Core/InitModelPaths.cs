@@ -17,6 +17,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine.Networking;
+using System.Threading.Tasks;
+using System;
+using UnityEngine.Assertions.Comparers;
 
 namespace Rrtf
 {
@@ -34,13 +37,9 @@ namespace Rrtf
     /// </summary>
     public class InitModelPaths : MonoBehaviour
     {
-        private static string modelFolder = Path.Combine("ps-unity-modeldata", "ps_all_english");//assumed to be in the streaming assets folder
-        private static string dictionaryPath = "lm/default_dictionary.dic";//assumed to be in the modelFolder
-        //ASSUMED TO BE IN THE MODELS FOLDER!!!
-        private const string ADULT_AM_FOLDER = "hmm/en-us-semi";
-        public static string CHILD_AM_FOLDER = "hmm/rrtraining_mmie01.ci_cont";
-
-
+        public const string ModelPathsResourcePath = "RRTF/ModelPaths";
+        private static string modelFolder;
+        private static string dictionaryPath;
 
         public enum ACCOUSTIC_MODELS { ADULT = 0, CHILD = 1 }
 
@@ -50,18 +49,8 @@ namespace Rrtf
         {
             get
             {
-
-#if !UNITY_EDITOR && UNITY_ANDROID
-			// 2015-10-22 Greg: on Android let's try language model weight one step lower to reduce false positives (mostly hallucinations)
-			if(AMChoice == ACCOUSTIC_MODELS.ADULT) return 0;
-			//must be child
-			if(IsContextDependent) return 5;
-			else return 5;
-#else
                 if (AMChoice == ACCOUSTIC_MODELS.ADULT) return 1;
-                //must be child
                 else return 5;
-#endif
             }
         }
 
@@ -83,14 +72,6 @@ namespace Rrtf
         {
             get
             {
-#if UNITY_EDITOR
-                if (!ArePathsFixed)
-                {
-                    //we allow this in editor only so you can test easily in editor without having to call InitModelPaths.Awake()
-                    SetupCorrectedAssetPaths();
-                }
-#endif
-
                 if (!ArePathsFixed)
                 {
                     Debug.LogError("ps-unity. Paths haven't been fixed. This will cause a crash in sphinx");
@@ -103,14 +84,6 @@ namespace Rrtf
         {
             get
             {
-#if UNITY_EDITOR
-                if (!ArePathsFixed)
-                {
-                    //we allow this in editor only so you can test easily in editor without having to call InitModelPaths.Awake()
-                    SetupCorrectedAssetPaths();
-                }
-#endif
-
                 if (!ArePathsFixed)
                 {
                     Debug.LogError("ps-unity. Paths haven't been fixed. This will cause a crash in sphinx");
@@ -123,14 +96,6 @@ namespace Rrtf
         {
             get
             {
-#if UNITY_EDITOR
-                if (!ArePathsFixed)
-                {
-                    //we allow this in editor only so you can test easily in editor without having to call InitModelPaths.Awake()
-                    SetupCorrectedAssetPaths();
-                }
-#endif
-
                 if (!ArePathsFixed)
                 {
                     Debug.LogError("ps-unity. Paths haven't been fixed. This will cause a crash in sphinx");
@@ -142,173 +107,73 @@ namespace Rrtf
 
         //updated automaticlly when am choice is changed
         private static string accousticModelFolder; //assumed to be in the modelFolder
-
-        /// <summary>
-        /// The accoustic model file list. The name of the txt that holdes the 
-        /// name of the files in the accoustic model folder. 
-        /// </summary>
-        private static string accousticModelFileList = "AccousticModelFileListForAndroid";
-
-        private static string adultModelFileList = "AdultModelFileList";
-
-        private static string childModelFileList = "ChildeModelFileList";
+        private static ModelPaths _modelPathsResource;
 
         /// <summary>
         /// Only used on android. Will return true if currently running the path fixing coroutine
         /// </summary>
-        public static bool IsCurrentlyUpdatingPaths {get; private set;} = false;
-
-        // Use this for initialization
+        public static bool IsCurrentlyUpdatingPaths { get; private set; } = false;
+        public static Action<float> OnPathUpdateProgress;
+        public static Action<bool> OnPathUpdateCompletion;
+#if UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void CorrectPathsForEditor()
+        {
+            if (!FindAnyObjectByType<InitModelPaths>())
+            {
+                SetupCorrectedAssetPaths(Application.streamingAssetsPath);
+            }
+        }
+#endif
         void Awake()
         {
             //why do i do this? Because Android is stupid. I need to know the folder names and such when I run
             //the createModelCacheForAndroid coroutine. BUt it doesnt matter for the rest
 #if UNITY_STANDALONE_ANDROID
-    StartCoroutine(createModelCacheForAndroid());
+    createModelCacheForAndroid();
 #else
-    SetupCorrectedAssetPaths();
+            SetupCorrectedAssetPaths(Application.streamingAssetsPath);
 #endif
         }
 
-        private static void SetupCorrectedAssetPaths()
+        private static void SetupCorrectedAssetPaths(string baseFolder)
         {
             if (ArePathsFixed)
             {
                 return;
             }
 
+            if (_modelPathsResource == null)
+            {
+                _modelPathsResource = Resources.Load<ModelPaths>(ModelPathsResourcePath);
+            }
+
             UpdateAMFolder();
-            modelFolder = Path.Combine(Application.streamingAssetsPath, modelFolder);
-            dictionaryPath = Path.Combine(modelFolder, dictionaryPath);
-            accousticModelFolder = Path.Combine(modelFolder, accousticModelFolder);
+            modelFolder = Path.Combine(baseFolder, _modelPathsResource.ModelFolderRoot);
+            dictionaryPath = Path.Combine(modelFolder, _modelPathsResource.DictionarySubpath);
             Debug.Log("ps-unity: paths fixed using modelFolder: " + modelFolder);
             Debug.Log("ps-unity: am folder: " + accousticModelFolder);
-            
+
             ArePathsFixed = true;
         }
 
-        private string streamingassetspathtemp;
-        private IEnumerator createModelCacheForAndroid()
+        private async Task createModelCacheForAndroid()
         {
+            if (ArePathsFixed || IsCurrentlyUpdatingPaths)
+            {
+                OnPathUpdateCompletion.Invoke(false);
+                return;
+            }
+
             IsCurrentlyUpdatingPaths = true;
-            string localModelPath = Path.Combine(Application.temporaryCachePath, modelFolder);
-            //		if(Directory.Exists(localModelPath))
-            //			Directory.Delete(localModelPath,true);
-
-            /*********DICTIONARY********/
-            //copy and update the accoustic model
-            UnityWebRequest wwwDict = UnityWebRequest.Get(Path.Combine(
-                Path.Combine(Application.streamingAssetsPath, modelFolder),
-                dictionaryPath));
-            dictionaryPath = Path.Combine(localModelPath, dictionaryPath);
-
-            if (!(new FileInfo(dictionaryPath)).Directory.Exists)
-                (new FileInfo(dictionaryPath)).Directory.Create();
-
-            if (!(new FileInfo(dictionaryPath)).Exists)
+            if (_modelPathsResource == null)
             {
-                yield return wwwDict.SendWebRequest();
-                if (wwwDict.result == UnityWebRequest.Result.Success)
-                {
-                    File.WriteAllBytes(dictionaryPath, wwwDict.downloadHandler.data);
-                    Debug.Log("Created: " + dictionaryPath);
-                }
-                else
-                {
-                    Debug.LogError("failed to write dictionary: " + dictionaryPath);
-                }
+                _modelPathsResource = Resources.Load<ModelPaths>(ModelPathsResourcePath);
             }
-            /********Dictionary******/
+            await Extract(OnPathUpdateProgress, OnPathUpdateCompletion);
 
-
-            //write all the accousticModelFiles but first create the directory
-            string localAccousticFolder = Path.Combine(localModelPath, accousticModelFolder);
-            if (!(new DirectoryInfo(localAccousticFolder)).Exists)
-            {
-                (new DirectoryInfo(localAccousticFolder)).Create();
-                Debug.Log("localAccousticFolder: " + localAccousticFolder);
-            }
-
-            string streamingAMFolder = Path.Combine(Application.streamingAssetsPath, modelFolder);
-            streamingassetspathtemp = streamingAMFolder;
-            streamingAMFolder = Path.Combine(streamingAMFolder, accousticModelFolder);
-            Debug.Log("streaming AM Folder: " + streamingAMFolder);
-
-            string[] fileNames = ((TextAsset)Resources.Load(accousticModelFileList)).text.
-                Split(new string[] { System.Environment.NewLine }, System.StringSplitOptions.RemoveEmptyEntries);
-            Debug.Log("Retrieved filenames, length = " + fileNames.Length);
-
-            foreach (string file in fileNames)
-            {
-                string localFile = Path.Combine(localAccousticFolder, file);
-                if ((new FileInfo(localFile)).Exists) continue;
-
-                UnityWebRequest folderEntries = UnityWebRequest.Get(Path.Combine(streamingAMFolder, file));
-
-                yield return folderEntries.SendWebRequest();
-                if (folderEntries.result == UnityWebRequest.Result.Success)
-                {
-                    File.WriteAllBytes(localFile, folderEntries.downloadHandler.data);
-                    Debug.Log("Created: " + Path.Combine(localAccousticFolder, file));
-                }
-                else
-                {
-                    Debug.LogError("failure to create: " + Path.Combine(localAccousticFolder, file));
-                }
-            }
-
-            modelFolder = localModelPath;
-            accousticModelFolder = localAccousticFolder;
-            //dictionary is assogined above
-
-            //****************creating the other am folders*************************
-
-            yield return StartCoroutine(copyAMFiles(localModelPath, ADULT_AM_FOLDER, adultModelFileList));
-            yield return StartCoroutine(copyAMFiles(localModelPath, CHILD_AM_FOLDER, childModelFileList));
-
-            //*****************done creating the other AM folders*******************
-
-            //checks to see if at least minloadDelay time has passed if it hasnt then we wait.
-            //float timeElapsed = Time.timeSinceLevelLoad - timeStart;
-            //yield return new WaitForSeconds(Mathf.Max(0, MinLoadDelay - timeElapsed));
-
-            ArePathsFixed = true;
+            SetupCorrectedAssetPaths(Application.temporaryCachePath);
             IsCurrentlyUpdatingPaths = false;
-        }
-
-        private IEnumerator copyAMFiles(string localModelPath, string folderName, string fileListtxt)
-        {
-            string localFolder = Path.Combine(localModelPath, folderName);
-
-            if (!(new DirectoryInfo(localFolder)).Exists)
-                (new DirectoryInfo(localFolder)).Create();
-
-            //string streamingFolder = Path.Combine(Application.streamingAssetsPath,modelFolder);
-            string streamingFolder = streamingassetspathtemp;
-            streamingFolder = Path.Combine(streamingFolder, folderName);
-            Debug.Log("streaming folder name: " + streamingFolder);
-            string[] fileNames = ((TextAsset)Resources.Load(fileListtxt)).text.
-                Split(new string[] { System.Environment.NewLine }, System.StringSplitOptions.RemoveEmptyEntries);
-            Debug.Log("Retrieved filenames, length = " + fileNames.Length);
-
-            foreach (string file in fileNames)
-            {
-                string destPath = Path.Combine(localFolder, file);
-                if ((new FileInfo(destPath).Exists)) continue;
-
-                UnityWebRequest folderEntries = UnityWebRequest.Get(Path.Combine(streamingFolder, file));
-                yield return folderEntries.SendWebRequest();
-                if (folderEntries.result == UnityWebRequest.Result.Success)
-                {
-                    File.WriteAllBytes(destPath, folderEntries.downloadHandler.data);
-                }
-                else
-                {
-                    Debug.LogError("failed: " + destPath);
-                }
-            }
-
-            yield return null;
         }
 
         private static void UpdateAMFolder()
@@ -316,61 +181,72 @@ namespace Rrtf
             if (IsCurrentlyUpdatingPaths)
             {
                 Debug.LogError("ps-unity: can't change accoustic model if android is currently copying folder data");
+                return;
             }
 
-            if (ArePathsFixed)
+            if(!ArePathsFixed)
             {
-                if (_amchoice == ACCOUSTIC_MODELS.ADULT)
-                    accousticModelFolder = Path.Combine(modelFolder, InitModelPaths.ADULT_AM_FOLDER);
-                else
-                    accousticModelFolder = Path.Combine(modelFolder, InitModelPaths.CHILD_AM_FOLDER);
+                return;
             }
+
+            if (_modelPathsResource == null)
+            {
+                _modelPathsResource = Resources.Load<ModelPaths>(ModelPathsResourcePath);
+            }
+
+            if (_amchoice == ACCOUSTIC_MODELS.ADULT)
+                accousticModelFolder = Path.Combine(modelFolder, _modelPathsResource.AdultAccousticModelSubpath);
             else
-            {
-                if (_amchoice == ACCOUSTIC_MODELS.ADULT)
-                    InitModelPaths.accousticModelFolder = InitModelPaths.ADULT_AM_FOLDER;
-                else
-                    InitModelPaths.accousticModelFolder = InitModelPaths.CHILD_AM_FOLDER;
-            }
-        }
-
-        //the accousticmodel folder is assumed to be in the modelFolder
-        private static bool createFolderListTxt(string folderName, string txtName)
-        {
-            string localModelFolder = Application.dataPath + "/StreamingAssets/" + modelFolder + folderName;
-            if (!Directory.Exists(localModelFolder))
-            {
-                Debug.LogError("CRITICAL ERROR: " + localModelFolder + " does not exist. folder txt will not be updated");
-                return false;
-            }
-
-            //get all the file names in a single string
-            string[] files = Directory.GetFiles(localModelFolder);
-            List<string> fileNames = new List<string>();
-            for (int i = 0; i < files.Length; i++)
-            {
-                FileInfo info = new FileInfo(files[i]);
-                if (info.Extension != ".meta")
-                    fileNames.Add(info.Name);
-            }
-
-            //write to accousticModelFileList file txt
-            File.WriteAllLines(Application.dataPath + "/Resources/" + txtName + ".txt", fileNames.ToArray());
-
-            return true;
+                accousticModelFolder = Path.Combine(modelFolder, _modelPathsResource.ChildAccousticModelSubpath);
         }
 
         /// <summary>
-        /// creates a txt file containing all the files in the resources txt;
+        /// Extracts the files from the streaming assets zip indicated in _srcFolder and puts them into a temp folder indicated by TargetDirectory
         /// </summary>
-#if UNITY_EDITOR
-        [UnityEditor.MenuItem("RRTF/Create LM File List")]
-#endif
-        public static bool createFileListTxt()
+        /// <param name="progress">Callback to indicate progress via a 0-100 number</param>
+        /// <param name="onComplete">Callback for when extraction has fully completed. Will set true if successfull</param>
+        /// <returns>true if successful, otherwise false</returns>
+        private async Task<bool> Extract(Action<float> progress, Action<bool> onComplete)
         {
-            return createFolderListTxt(accousticModelFolder, accousticModelFileList) &&
-                createFolderListTxt(ADULT_AM_FOLDER, adultModelFileList) &&
-                createFolderListTxt(CHILD_AM_FOLDER, childModelFileList);
+            int[] fileCounter = { 0 };//we need to pass this by ref to an awaitable function, using 'ref' isn't possible
+            await RecurseExtract(_modelPathsResource.ModelFolderStructure, progress, fileCounter);
+
+            string rootPath = Path.Combine(Application.temporaryCachePath, _modelPathsResource.ModelFolderRoot);
+            onComplete?.Invoke(true);
+            return true;
+        }
+
+        private async Task RecurseExtract(FolderNode node, Action<float> progress, int[] filesCopiedSoFar)
+        {
+            string dstFolder = Path.Combine(Application.temporaryCachePath, node.Path);
+            Directory.CreateDirectory(dstFolder);
+
+            foreach (string file in node.Files)
+            {
+                string srcFilePath = Path.Combine(Application.streamingAssetsPath, file);
+                string targetFilePath = Path.Combine(dstFolder, file);
+
+                using (DownloadHandlerFile handler = new DownloadHandlerFile(targetFilePath))
+                using (UnityWebRequest req = new UnityWebRequest(srcFilePath, UnityWebRequest.kHttpVerbGET))
+                {
+                    req.downloadHandler = handler;
+                    await req.SendWebRequest();
+
+                    if (req.result != UnityWebRequest.Result.Success)
+                    {
+                        Debug.LogError($"Extraction failed for asset {file}: {req.error}");
+                    }
+                }
+
+                filesCopiedSoFar[0]++;
+                float done = filesCopiedSoFar[0] / (float)_modelPathsResource.FileCount;
+                progress?.Invoke(done);
+            }
+
+            foreach (var folder in node.Folders)
+            {
+                await RecurseExtract(folder, progress, filesCopiedSoFar);
+            }
         }
     }
 }

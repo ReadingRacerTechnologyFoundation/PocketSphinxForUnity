@@ -20,6 +20,12 @@ using System;
 
 namespace Rrtf.Editor
 {
+    /// <summary>
+    /// This class is made to setup two things
+    /// 1. Streaming Assets files. You can choose not to do this by using the Assets/ps_unity_settings asset
+    /// 2. Resources/RRTF/ModelPaths. This will ALWAYS be copied if its missing. However, if you want to modify 
+    /// your own model paths, just modify the one in resources. InitModelPaths will always look for this file.
+    /// </summary>
     [InitializeOnLoad]
     public static class PsUnitySetup
     {
@@ -27,6 +33,9 @@ namespace Rrtf.Editor
         public const string SettingsPath = "Assets/ps_unity_settings.asset";
 
         private const string IsSetupKey = "ps_unity_setup";
+
+        private const string ModelPathsSrcPath = "Packages/com.readingracer.ps-unity/DEFAULT_ModelPaths.asset";
+        private const string ModelPathsDstPath = "Assets/Resources/" + InitModelPaths.ModelPathsResourcePath + ".asset";
 
         static PsUnitySetup()
         {
@@ -37,7 +46,7 @@ namespace Rrtf.Editor
             }
         }
 
-        // [MenuItem("GameObject/TestPSUnity")]
+        [MenuItem("GameObject/TestPSUnity")]
         private static void Setup()
         {
             Debug.Log("ps-unity setup running");
@@ -45,6 +54,35 @@ namespace Rrtf.Editor
             if (settings.importModelData)
             {
                 FindPackagePath(PackageName, StreamingAssetsSetup);
+            }
+
+            CopyModelPaths();
+        }
+
+        private static void CopyModelPaths()
+        {
+            if (AssetDatabase.LoadAssetAtPath<ModelPaths>(ModelPathsDstPath) != null)
+            {
+                return;
+            }
+
+            Debug.Assert(AssetDatabase.LoadAssetAtPath<ModelPaths>(ModelPathsSrcPath) != null, 
+                ModelPathsDstPath + "is missing. Please check you didn't accidentally delete it. This is needed");
+
+            //create folders if they don't exist
+            string projectRoot = Directory.GetParent(Application.dataPath).FullName;
+            string targetSubfolder =  Path.GetDirectoryName(ModelPathsDstPath);
+            string targetDir = Path.Combine(projectRoot, targetSubfolder);
+            Directory.CreateDirectory(targetDir);
+
+            if (AssetDatabase.CopyAsset(ModelPathsSrcPath, ModelPathsDstPath))
+            {
+                AssetDatabase.Refresh();
+                Debug.Log("successfully copied ModelPaths to resources");
+            }
+            else
+            {
+                Debug.LogError("Failed to copy ModelPaths to resources. This will cause a crash");
             }
         }
 

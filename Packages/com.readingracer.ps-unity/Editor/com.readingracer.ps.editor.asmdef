@@ -1,7 +1,9 @@
 {
     "name": "com.readingracer.ps.editor",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:122c4426855d62c40a8c0c2517573397"
+    ],
     "includePlatforms": [
         "Editor"
     ],
