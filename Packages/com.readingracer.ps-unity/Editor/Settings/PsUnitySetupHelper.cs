@@ -46,7 +46,7 @@ namespace Rrtf.Editor
             }
         }
 
-        [MenuItem("GameObject/TestPSUnity")]
+        // [MenuItem("GameObject/TestPSUnity")]
         private static void Setup()
         {
             Debug.Log("ps-unity setup running");

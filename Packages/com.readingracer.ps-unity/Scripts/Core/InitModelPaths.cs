@@ -20,6 +20,7 @@ using UnityEngine.Networking;
 using System.Threading.Tasks;
 using System;
 using UnityEngine.Assertions.Comparers;
+using System.Linq;
 
 namespace Rrtf
 {
@@ -67,7 +68,7 @@ namespace Rrtf
             }
         }
         private static ACCOUSTIC_MODELS _amchoice = ACCOUSTIC_MODELS.ADULT;
-        public static bool ArePathsFixed { get; private set; }
+        public static bool ArePathsFixed { get; private set; } = false;
         public static string ModelFolder
         {
             get
@@ -125,43 +126,43 @@ namespace Rrtf
             }
         }
 #endif
-        void Awake()
+        //why do i do this? Because Android is stupid. I need to know the folder names and such when I run
+        //the createModelCacheForAndroid coroutine. BUt it doesnt matter for the rest
+#if UNITY_ANDROID && !UNITY_EDITOR
+        async Task Start()
         {
-            //why do i do this? Because Android is stupid. I need to know the folder names and such when I run
-            //the createModelCacheForAndroid coroutine. BUt it doesnt matter for the rest
-#if UNITY_STANDALONE_ANDROID
-    createModelCacheForAndroid();
-#else
-            SetupCorrectedAssetPaths(Application.streamingAssetsPath);
-#endif
+            Debug.Log("ps-unity: Setting up Model Cache For Android");
+            await CreateModelCacheForAndroid();
         }
+#else
+        void Start()
+        {
+            Debug.Log("ps-unity: Setting up Model Cache For windows/ios/etc");
+            SetupCorrectedAssetPaths(Application.streamingAssetsPath);
+        }
+#endif
 
         private static void SetupCorrectedAssetPaths(string baseFolder)
         {
-            if (ArePathsFixed)
-            {
-                return;
-            }
-
             if (_modelPathsResource == null)
             {
                 _modelPathsResource = Resources.Load<ModelPaths>(ModelPathsResourcePath);
             }
 
-            UpdateAMFolder();
             modelFolder = Path.Combine(baseFolder, _modelPathsResource.ModelFolderRoot);
             dictionaryPath = Path.Combine(modelFolder, _modelPathsResource.DictionarySubpath);
+            UpdateAMFolder();
             Debug.Log("ps-unity: paths fixed using modelFolder: " + modelFolder);
-            Debug.Log("ps-unity: am folder: " + accousticModelFolder);
 
             ArePathsFixed = true;
         }
 
-        private async Task createModelCacheForAndroid()
+        private async Task CreateModelCacheForAndroid()
         {
             if (ArePathsFixed || IsCurrentlyUpdatingPaths)
             {
-                OnPathUpdateCompletion.Invoke(false);
+                Debug.Log("ps-unity: earlyout1");
+                OnPathUpdateCompletion?.Invoke(false);
                 return;
             }
 
@@ -172,8 +173,8 @@ namespace Rrtf
             }
             await Extract(OnPathUpdateProgress, OnPathUpdateCompletion);
 
-            SetupCorrectedAssetPaths(Application.temporaryCachePath);
             IsCurrentlyUpdatingPaths = false;
+            SetupCorrectedAssetPaths(Application.temporaryCachePath);
         }
 
         private static void UpdateAMFolder()
@@ -181,11 +182,6 @@ namespace Rrtf
             if (IsCurrentlyUpdatingPaths)
             {
                 Debug.LogError("ps-unity: can't change accoustic model if android is currently copying folder data");
-                return;
-            }
-
-            if(!ArePathsFixed)
-            {
                 return;
             }
 
@@ -208,45 +204,50 @@ namespace Rrtf
         /// <returns>true if successful, otherwise false</returns>
         private async Task<bool> Extract(Action<float> progress, Action<bool> onComplete)
         {
-            int[] fileCounter = { 0 };//we need to pass this by ref to an awaitable function, using 'ref' isn't possible
-            await RecurseExtract(_modelPathsResource.ModelFolderStructure, progress, fileCounter);
+            Debug.Log("ps-unity: extract");
+            string srcRoot = Path.Combine(Application.streamingAssetsPath, _modelPathsResource.ModelFolderRoot);
+            string dstRoot = Path.Combine(Application.temporaryCachePath, _modelPathsResource.ModelFolderRoot);
+            Debug.Log("ps-unity dstRoot: " + dstRoot);
+            float totalCopies = _modelPathsResource.Files.Length;
+            int copyCount = 0;
 
-            string rootPath = Path.Combine(Application.temporaryCachePath, _modelPathsResource.ModelFolderRoot);
-            onComplete?.Invoke(true);
-            return true;
-        }
-
-        private async Task RecurseExtract(FolderNode node, Action<float> progress, int[] filesCopiedSoFar)
-        {
-            string dstFolder = Path.Combine(Application.temporaryCachePath, node.Path);
-            Directory.CreateDirectory(dstFolder);
-
-            foreach (string file in node.Files)
+            //create new directories. easy
+            foreach(string dir in _modelPathsResource.Directories)
             {
-                string srcFilePath = Path.Combine(Application.streamingAssetsPath, file);
-                string targetFilePath = Path.Combine(dstFolder, file);
+                string fullDir = Path.Combine(dstRoot, dir);
+                Debug.Log("ps-unity dir create: " + fullDir);
+                Directory.CreateDirectory(fullDir);
+                Debug.Log("ps unity dir create is success? " + Directory.Exists(fullDir));
+            }
+
+            Debug.Log("ps-unity: copying files");
+            foreach (string file in _modelPathsResource.Files)
+            {
+                string srcFilePath = Path.Combine(srcRoot, file);
+                Debug.Log("ps-unity: srcPath: " + srcFilePath);
+                string targetFilePath = Path.Combine(dstRoot, file);
+                Debug.Log("ps-unity: dstPath: " + targetFilePath);
 
                 using (DownloadHandlerFile handler = new DownloadHandlerFile(targetFilePath))
                 using (UnityWebRequest req = new UnityWebRequest(srcFilePath, UnityWebRequest.kHttpVerbGET))
                 {
                     req.downloadHandler = handler;
+                    Debug.Log("ps-unity: sendRequestStart");
                     await req.SendWebRequest();
-
+                    Debug.Log("ps-unity: sendRequestEnd");
                     if (req.result != UnityWebRequest.Result.Success)
                     {
-                        Debug.LogError($"Extraction failed for asset {file}: {req.error}");
+                        Debug.LogError($"ps-unity: Extraction failed for asset {file}: {req.error}");
                     }
                 }
 
-                filesCopiedSoFar[0]++;
-                float done = filesCopiedSoFar[0] / (float)_modelPathsResource.FileCount;
+                float done = ++copyCount / (float)totalCopies;
                 progress?.Invoke(done);
             }
 
-            foreach (var folder in node.Folders)
-            {
-                await RecurseExtract(folder, progress, filesCopiedSoFar);
-            }
+            Debug.Log("ps-unity: finishedrecurse");
+            onComplete?.Invoke(true);
+            return true;
         }
     }
 }

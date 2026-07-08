@@ -13,8 +13,8 @@ namespace Rrtf.Editor
         private SerializedProperty _dictionarySubpathProp;
         private SerializedProperty _adultAccousticModelSubpathProp;
         private SerializedProperty _childAccousticModelSubpathProp;
-        private SerializedProperty _filecountProp;
-        private SerializedProperty _rootProp;
+        private SerializedProperty _filesProp;
+        private SerializedProperty _dirsProp;
 
         private void OnEnable()
         {
@@ -23,8 +23,8 @@ namespace Rrtf.Editor
             _dictionarySubpathProp = serializedObject.FindProperty("_dictionarySubpath");
             _adultAccousticModelSubpathProp = serializedObject.FindProperty("_adultAccousticModelSubpath");
             _childAccousticModelSubpathProp = serializedObject.FindProperty("_childAccousticModelSubpath");
-            _filecountProp = serializedObject.FindProperty("_fileCount");
-            _rootProp = serializedObject.FindProperty("_root");
+            _filesProp = serializedObject.FindProperty("_files");
+            _dirsProp = serializedObject.FindProperty("_dirs");
         }
         public override void OnInspectorGUI()
         {
@@ -36,74 +36,70 @@ namespace Rrtf.Editor
             EditorGUILayout.PropertyField(_childAccousticModelSubpathProp);
 
             EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.PropertyField(_filecountProp);
+            EditorGUILayout.PropertyField(_dirsProp, new GUIContent("Directories"));
+            EditorGUILayout.PropertyField(_filesProp);
             EditorGUI.EndDisabledGroup();
 
             if (serializedObject.ApplyModifiedProperties())
             {
                 string fullpath = Path.Combine(Application.streamingAssetsPath, _modelFolderRootProp.stringValue);
-                FolderNode root = RecordFolderInfo(fullpath, out int filecount);
-                _filecountProp.intValue = filecount;
-                _rootProp.managedReferenceValue = root;
+                int prefixLength = fullpath.Length + 1;//used to make relative paths later. +1 to remove leading slash
+                List<string> files = new List<string>(20);
+                List<string> dirs = new List<string>(20);
+                RecordFolderInfo(fullpath, files, dirs, prefixLength);
+                _filesProp.arraySize = files.Count;
+                for (int i = 0; i < files.Count; i++)
+                {
+                    _filesProp.GetArrayElementAtIndex(i).stringValue = files[i];
+                }
+                _dirsProp.arraySize = dirs.Count;
+                for (int i = 0; i < dirs.Count; i++)
+                {
+                    _dirsProp.GetArrayElementAtIndex(i).stringValue = dirs[i];
+                }
                 serializedObject.ApplyModifiedProperties();
             }
         }
 
-        public static FolderNode RecordFolderInfo(string fullpath, out int filecount)
+        private void RecordFolderInfo(string fullpath, List<string> files, List<string> dirs, int prefixLength)
         {
-            filecount = 0;
             if (!Directory.Exists(fullpath))
             {
                 EditorDialog.DisplayAlertDialog("Failure", "Failure to update directory info. The directory does not exist.", "Ok", DialogIconType.Error);
-                return null;
+                return;
             }
 
-            FolderNode root = DoRecord(fullpath, ref filecount);
-            if (root == null || filecount == 0)
+            DoRecord(fullpath, files, dirs, prefixLength);
+            if (files.Count == 0)
             {
                 EditorDialog.DisplayAlertDialog("Failure", "Failure to update directory info. The directory doesn't contain any files", "Ok", DialogIconType.Error);
-                root = null;
-            } 
+            }
             else
             {
                 Debug.Log("successfully updated model data folder structure");
             }
-            return root;
         }
 
-        public static FolderNode DoRecord(string path, ref int fileCount)
+        private void DoRecord(string path, List<string> files, List<string> dirs, int prefixLength)
         {
-            FolderNode n = null;
-            var files = Directory.GetFiles(path)
+            var newFiles = Directory.GetFiles(path)
                 .Where(file =>
                     !file.EndsWith(".meta", System.StringComparison.OrdinalIgnoreCase) &&
                     !file.EndsWith(".DS_Store", System.StringComparison.OrdinalIgnoreCase)
-                    ).ToArray();
-            var dirs = Directory.GetDirectories(path);
+                )
+                .Select(file => file.Substring(prefixLength));
+            files.AddRange(newFiles);
+            var newDirs = Directory.GetDirectories(path);
 
-            List<FolderNode> childNodes = new List<FolderNode>(dirs.Length);
-            foreach (var dir in dirs)
+            foreach (var dir in newDirs)
             {
-                var node = DoRecord(dir, ref fileCount);
-                if (node != null)
+                int oldFileCount = files.Count;
+                DoRecord(dir, files, dirs, prefixLength);
+                if (oldFileCount != files.Count)//we added new files!
                 {
-                    childNodes.Add(node);
+                    dirs.Add(dir.Substring(prefixLength));
                 }
             }
-
-            //if there actually is stuff, fill out n
-            if (childNodes.Count > 0 || files.Length > 0)
-            {
-                n = new FolderNode
-                {
-                    Path = path,
-                    Files = new List<string>(files),
-                    Folders = childNodes
-                };
-                fileCount += files.Length;
-            }
-
-            return n;
         }
     }
 }

@@ -38,7 +38,7 @@ namespace Rrtf
 		[SerializeField, Header("UI components")]
 		private Transform _readButton = null;
 		[SerializeField]
-		private GameObject _initModelPathsTextObj = null;
+		private Text _initModelPathsText = null;
 		[SerializeField]
 		private Text _micDevice = null;
 		[SerializeField]
@@ -63,11 +63,12 @@ namespace Rrtf
 
 			//we need to make sure initModelPaths is done, just for android. 
 			//its best if InitModelPaths is placed in a preload scene first
+			InitModelPaths.OnPathUpdateProgress = progressUpdate;
 			while (!InitModelPaths.ArePathsFixed)
 			{
 				yield return null;
 			}
-			_initModelPathsTextObj.SetActive(false);
+			_initModelPathsText.gameObject.SetActive(false);
 
 			InitModelPaths.AMChoice = _accousticModel;
 			Recognizer = new BasicFSGRecognizer(InitModelPaths.DefaultLanguageModelWeight, CreateConfig());
@@ -91,7 +92,12 @@ namespace Rrtf
 			}
 		}
 
-		void Destroy()
+		private void progressUpdate(float p)
+		{
+			_initModelPathsText.text = "Loading: " + ((int)(p * 100));
+		}
+
+		void OnDestroy()
 		{
 			Recognizer.stopRecognizingAndTurnOffMic();
 		}

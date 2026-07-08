@@ -12,8 +12,16 @@ namespace Rrtf
         public string DictionarySubpath => _dictionarySubpath;
         public string AdultAccousticModelSubpath => _adultAccousticModelSubpath;
         public string ChildAccousticModelSubpath => _childAccousticModelSubpath;
-        public FolderNode ModelFolderStructure => _root;
-        public int FileCount => _fileCount;
+
+        /// <summary>
+        /// All the files that need to be copied
+        /// </summary>
+        public string[] Files => _files;
+
+        /// <summary>
+        /// All the directories that need to be created. Made for ease of use
+        /// </summary>
+        public string[] Directories => _dirs;
 
         [SerializeField, Tooltip("The root of all your modeldata in the streaming assets folder")]
         private string _modelFolderRoot;
@@ -25,9 +33,9 @@ namespace Rrtf
         private string _childAccousticModelSubpath;
 
         [SerializeField]
-        private int _fileCount; // set by editor script
-        [SerializeReference]
-        private FolderNode _root;
+        private string[] _files;//relative to the streaming assets folder
+        [SerializeField]
+        private string[] _dirs;//relative to the streaming assets folder
 
         void OnValidate()
         {
@@ -51,16 +59,5 @@ namespace Rrtf
                 Debug.Assert(Directory.Exists(childAm), "Your child accoustic model folder does not exist. Leave ChildAccousticModelSubPath empty if it is unused", this);
             }
         }
-    }
-
-
-    [Serializable]
-    public class FolderNode
-    {
-        public string Path;
-        [SerializeReference]
-        public List<string> Files;
-        [SerializeReference]
-        public List<FolderNode> Folders;
     }
 }
