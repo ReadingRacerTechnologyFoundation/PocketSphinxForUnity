@@ -39,11 +39,23 @@ namespace Rrtf.Editor
 
         static PsUnitySetup()
         {
-            if (!SessionState.GetBool(IsSetupKey, false))
+            EditorApplication.delayCall += WaitForImport;
+        }
+
+        private static void WaitForImport()
+        {
+            // Guard to ensure it only runs once per session
+            if (SessionState.GetBool(IsSetupKey, false)) return;
+
+            // If Unity is still currently importing or compiling, wait for the next cycle
+            if (EditorApplication.isUpdating || EditorApplication.isCompiling)
             {
-                Setup();
-                SessionState.SetBool(IsSetupKey, true);
+                EditorApplication.delayCall += WaitForImport;
+                return;
             }
+
+            Setup();
+            SessionState.SetBool(IsSetupKey, true);
         }
 
         // [MenuItem("GameObject/TestPSUnity")]
@@ -53,10 +65,8 @@ namespace Rrtf.Editor
             var settings = FindOrCreateEditorSettings();
             if (settings.importModelData)
             {
-                FindPackagePath(PackageName, StreamingAssetsSetup);
+                FindPackagePath(PackageName, OnPackageFound);
             }
-
-            CopyModelPaths();
         }
 
         private static void CopyModelPaths()
@@ -84,6 +94,12 @@ namespace Rrtf.Editor
             {
                 Debug.LogError("Failed to copy ModelPaths to resources. This will cause a crash");
             }
+        }
+
+        private static void OnPackageFound(string packagePath)
+        {
+            StreamingAssetsSetup(packagePath);
+            CopyModelPaths();
         }
 
         private static void StreamingAssetsSetup(string packagePath)

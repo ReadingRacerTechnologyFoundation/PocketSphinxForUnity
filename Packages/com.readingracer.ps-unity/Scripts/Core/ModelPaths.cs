@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using UnityEditor;
 using UnityEngine;
 
 namespace Rrtf
@@ -39,6 +40,12 @@ namespace Rrtf
 
         void OnValidate()
         {
+            #if UNITY_EDITOR
+            if(EditorApplication.isUpdating && !Directory.Exists(Application.streamingAssetsPath))
+            {
+                return;//we are probably loading things up still
+            }
+            #endif
             Debug.Assert(
                 !string.IsNullOrEmpty(_modelFolderRoot) && 
                 !string.IsNullOrEmpty(_dictionarySubpath) && 
