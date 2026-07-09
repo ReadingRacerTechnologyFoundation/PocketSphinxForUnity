@@ -17,11 +17,13 @@ using System;
 namespace Rrtf.Sphinx
 {
 	using SphinxNative;
-	/// <summary>
-	/// Helper class to help better manage and call pocketsphinx 
-	/// decoder functions in a more C# like enviroment
-	/// </summary>
-	public class Decoder
+    using UnityEngine;
+
+    /// <summary>
+    /// Helper class to help better manage and call pocketsphinx 
+    /// decoder functions in a more C# like enviroment
+    /// </summary>
+    public class Decoder
 	{
 		/// <summary>
 		/// Gets the raw decoder. Be very careful when using this. IF this decoder's reference count = 0;
@@ -157,11 +159,12 @@ namespace Rrtf.Sphinx
 		/// </summary>
 		/// <returns>The partial raw audio.</returns>
 		/// <param name="data">Audio data.</param>
-		public int ProcessPartialRawAudio(short[] data)
+		public int ProcessPartialRawAudio(short[] data, int length)
 		{
+			length = Mathf.Min(data.Length, length);
 			return PocketSphinx.ps_process_raw(decoder,
 											   data,
-											   Convert.ToUInt32(data.Length),
+											   (uint)length,
 											   false,
 											   false);
 		}

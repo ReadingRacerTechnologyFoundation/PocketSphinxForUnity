@@ -17,7 +17,7 @@ using UnityEngine;
 using Rrtf.Sphinx;
 using UnityEngine.UI;
 
-namespace Rrtf
+namespace Rrtf.Samples
 {
 	/// <summary>
 	/// A simple example showing how to use the BasicFSGRecognizer. Which specializes in listening to sentences.
@@ -37,8 +37,6 @@ namespace Rrtf
 		private Transform _readButton = null;
 		[SerializeField]
 		private Text _initModelPathsText = null;
-		[SerializeField]
-		private Text _micDevice = null;
 		[SerializeField]
 		private Text[] _words = new Text[7];
 
@@ -70,16 +68,6 @@ namespace Rrtf
 			if (vo)
 			{
 				vo.SetRecognizer(Recognizer);
-			}
-
-			if (_micDevice)
-			{
-				//wait for mic controller to become initialized
-				while(MicController.Instance == null)
-				{
-					yield return null;
-				}
-				_micDevice.text = "Mic: " + MicController.Instance.MicDevice;
 			}
 		}
 

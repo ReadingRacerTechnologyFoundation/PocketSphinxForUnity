@@ -15,7 +15,7 @@
 using System;
 using UnityEngine;
 
-namespace Rrtf
+namespace Rrtf.Samples
 {
     public class VolumeOutput : MonoBehaviour
     {

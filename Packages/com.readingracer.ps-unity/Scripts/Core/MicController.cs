@@ -15,23 +15,57 @@
 using UnityEngine;
 using System.Collections;
 using System;
+using System.Linq;
+using Unity.Collections;
 
 namespace Rrtf
 {
 	/// <summary>
-	/// This is the one stop shop for Mic Control.
+	/// This is the one stop shop for Mic Control. Init is called by the speechrecognizer. You can choose a mic by
+	/// setting the PreferedMicDevice at any point. This uses a circular buffer.
 	/// </summary>
 	public class MicController : MonoBehaviour
 	{
+		/// <summary>
+		/// Delegate for when audiosamples are found from the mic
+		/// </summary>
+		/// <param name="mc">The Mic Controller that has new data. (its a singleton) </param>
+		/// <param name="e">The event base type. It should be empty</param>
 		public delegate void NewAudioSamplesFound(MicController mc, EventArgs e);
+
+		/// <summary>
+		/// Event fired when new audio samples are found. Use with AudioSamples to get the new samples.
+		/// </summary>
 		public event NewAudioSamplesFound OnNewAudioSamplesFound;
 
-		public static bool IsInited { get; private set; }
-		public static MicController Instance { get { return _Me; } }
-		public string MicDevice {get; private set;}
+		/// <summary>
+		/// List the available microphone devices
+		/// </summary>
+		public string[] MicDevices => Microphone.devices;
 
-		//last audio samples taken. Might be null.
-		public short[] AudioSamples { get; private set; }
+		/// <summary>
+		/// get the name of the mic thats currently being used. This will return the
+		/// name of the default device if you use setPreferedDevice(null) or setPreferedDevice(string.Empty).
+		/// if this returns null or empty, it means this probably hasn't been inited yet
+		/// </summary>
+		public string PreferedMicDevice => _preferedDevice;
+
+		/// <summary>
+		/// get the mic controller instance. will be null if not inited
+		/// </summary>
+		public static MicController Instance { get { return _Me; } }
+
+		/// <summary>
+		/// last audio samples taken. Use AudioSamplesSize to get the new samples size.
+		/// This buffer is larger than whats neccessary. It may also change if resize is needed.
+		/// </summary>
+		public short[] AudioSamples { get; private set; } = new short[SAMPLE_RATE/4];
+		private float[] _floatBuffer = new float[SAMPLE_RATE/4];
+
+		/// <summary>
+		/// The number of valid samples in AudioSamples
+		/// </summary>
+		public int AudioSamplesSize {get; private set;}
 
 		/// <summary>
 		/// This is a volume heuristic.
@@ -62,14 +96,14 @@ namespace Rrtf
 
 		public const int SAMPLE_RATE = 16000;
 		private const string NAME = "MIC_CONTROLLER";
+		private static string _preferedDevice = null;
 
 		/// <summary>
 		/// This is a wrapper for Unity's Microphone.Start function. It will always wrap
-		/// and the sample rate will always be 16000.
+		/// and the sample rate will always be 16000. Do not init yourself. The SpeechRecognizerl should do that
 		/// </summary>
-		/// <param name="deviceName">the mic device you want to enable</param>
 		/// <param name="lengthSec">the number of seconds to record</param>
-		public static void Init(string deviceName, int lengthSec)
+		public static void Init(int lengthSec)
 		{
 			if (Instance != null)
 			{
@@ -78,11 +112,9 @@ namespace Rrtf
 			}
 
 			_Me = (new GameObject(NAME)).AddComponent<MicController>();
-			_Me._Clip = Microphone.Start(deviceName, true, lengthSec, SAMPLE_RATE);
-			_Me.MicDevice = deviceName;
-
+			_Me._Clip = Microphone.Start(_preferedDevice, true, lengthSec, SAMPLE_RATE);
 			//find the default device
-			if (string.IsNullOrEmpty(deviceName))
+			if (string.IsNullOrEmpty(_preferedDevice))
 			{
 				string tempDevice = "error finding device";
 				foreach(string n in Microphone.devices)
@@ -94,8 +126,51 @@ namespace Rrtf
 					}
 				}
 
-				_Me.MicDevice = tempDevice;
+				_preferedDevice = tempDevice;
 			}
+		}
+
+		/// <summary>
+		/// Sets the prefered mic device. If set to null or empty then it will find the default device and use that.
+		/// If the device cannot be found in the MicDevices list then this will not do anything.
+		/// </summary>
+		/// <param name="name">The device you want to use</param>
+		public static void SetPreferedDevice(string name)
+		{
+			if(!string.IsNullOrEmpty(name) && !Microphone.devices.Contains(name))
+			{
+				return;
+			}
+
+			if(_Me == null)
+			{
+				_preferedDevice = name;
+				return;
+			}
+
+			float length = _Me._Clip.length;
+			Microphone.End(_preferedDevice);//the only way this wouldnt be recording is if _Me == null
+			_preferedDevice = name;
+			_Me._Clip = Microphone.Start(_preferedDevice, true, (int)length, SAMPLE_RATE);
+			if (string.IsNullOrEmpty(_preferedDevice))
+			{
+				string tempDevice = "error finding device";
+				foreach(string n in Microphone.devices)
+				{
+					if (Microphone.IsRecording(n))
+					{
+						tempDevice = n;
+						break;
+					}
+				}
+
+				_preferedDevice = tempDevice;
+			}
+
+			_Me.AudioSamplesSize = 0;
+			_Me.SquaredVolumeHeuristic = 0;
+			_Me.NumSamplesInVolume = 0;
+			_Me._LastRecordedPos = 0;
 		}
 
 		// Update is called once per frame
@@ -107,13 +182,10 @@ namespace Rrtf
 				return;
 			}
 
-			AudioSamples = GetNewRecordedAudio();
-
-			if (AudioSamples == null)
-				return;
+			bool hasNew = GetNewAudioSamples();
 
 			// Debug.Log("found new audio samples: " + AudioSamples.Length);
-			if (OnNewAudioSamplesFound != null)
+			if (OnNewAudioSamplesFound != null && AudioSamplesSize > 0 && hasNew)
 				OnNewAudioSamplesFound(this, EventArgs.Empty);
 		}
 
@@ -123,23 +195,26 @@ namespace Rrtf
 			NumSamplesInVolume = 0;
 		}
 
-		//returns null if no new data. This sometimes happens since 
-		//the mic doesn't record every frame.
-		//isUpdatingPos should be false when calling from EndWork()
-		//this is to allow the other decoders to get the data when they are
-		//updated in Update()
-		private short[] GetNewRecordedAudio(bool isUpdatingPos = true)
+		//updates the AudioSamples array with new audio data. Returns true if new data was found
+		private bool GetNewAudioSamples(bool isUpdatingPos = true)
 		{
-			int newPos = Microphone.GetPosition(null);
+			int newPos = Microphone.GetPosition(_preferedDevice);
 			//Debug.Log("newPos: " + newPos);
-			if (_LastRecordedPos == newPos) return null;
+			if (_LastRecordedPos == newPos) return false;
 
 			//we record continuaslly that means wrapping around around the clip
-			int size = (newPos > _LastRecordedPos ?
-						newPos - _LastRecordedPos : _Clip.samples - _LastRecordedPos + newPos);
+			int size = 	newPos > _LastRecordedPos ?
+						newPos - _LastRecordedPos : _Clip.samples - _LastRecordedPos + newPos;
 
-			float[] fSamps = new float[size];
-			short[] sSamps = new short[size];
+			if(size > _floatBuffer.Length)
+			{
+				_floatBuffer = new float[size];
+				AudioSamples = new short[size];
+			}
+
+			AudioSamplesSize = size;
+			Span<float> fSamps = _floatBuffer.AsSpan().Slice(0, size);
+			Span<short> sSamps = AudioSamples.AsSpan().Slice(0, size);
 			_Clip.GetData(fSamps, _LastRecordedPos);
 
 			DitherSamples(sSamps, fSamps);
@@ -157,12 +232,11 @@ namespace Rrtf
 				NumSamplesInVolume = Mathf.Min(maxVolumeSamples, NumSamplesInVolume + size);
 			}
 
-
-			return sSamps;
+			return true;
 		}
 
 		// helper method to calculate sum of squares for use in determining average rms level of utterance
-		private float SumOfSquaredValues(short[] data)
+		private float SumOfSquaredValues(Span<short> data)
 		{
 			float returnValue = 0.0f;
 			for (int i = 0; i < data.Length; i++)
@@ -175,7 +249,7 @@ namespace Rrtf
 		//Dithers the samples. No error checking. length of each array must be the same
 		//dithers a 32bit float audio sample ([-1,1])
 		//into a 16bit short audio sample
-		private void DitherSamples(short[] sSamps, float[] fSamps)
+		private void DitherSamples(Span<short> sSamps, Span<float> fSamps)
 		{
 			float linVal;
 			float frac;

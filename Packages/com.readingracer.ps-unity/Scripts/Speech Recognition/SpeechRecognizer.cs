@@ -463,7 +463,7 @@ namespace Rrtf.Sphinx
 					IsDecoding = false;
 
 				if (MicController.Instance == null)
-					MicController.Init (null, CLIP_LENGTH);
+					MicController.Init(CLIP_LENGTH);
 
 				MicController.Instance.OnNewAudioSamplesFound += UpdateDecoders;
 			}
@@ -484,7 +484,7 @@ namespace Rrtf.Sphinx
 
 				foreach(RecognizerInfo info in infos)
 				{
-					if (info.TheDecoder.ProcessPartialRawAudio(mc.AudioSamples) < 0)
+					if (info.TheDecoder.ProcessPartialRawAudio(mc.AudioSamples, mc.AudioSamplesSize) < 0)
 						Debug.LogError("decoder processing error in " + gameObject.name);
 					
 					Hypothesis hyp = info.TheDecoder.GetPartialHypothesis();
@@ -495,11 +495,6 @@ namespace Rrtf.Sphinx
 						info.InSpeech = newInSpeech;
 						startOrEndSpeech(newInSpeech, info.RaiseSpeechEvent);
 					}
-
-//					if(newInSpeech)
-//						Debug.Log("heard stuff: " + hyp.FullHypothesis);
-//					else
-//						Debug.Log("NOTHING");
 
 					if(!string.IsNullOrEmpty(hyp.NewSpeech))
 						info.RaiseSpeechEvent(new SpeechEventArgs(
