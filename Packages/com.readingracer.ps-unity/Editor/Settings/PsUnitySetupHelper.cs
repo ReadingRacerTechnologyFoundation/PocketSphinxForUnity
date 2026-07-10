@@ -134,7 +134,10 @@ namespace Rrtf.Editor
             foreach (string newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
             {
                 // Skip .meta files from the source if any exist
-                if (newPath.EndsWith(".meta") || newPath == ".git") continue; 
+                if (newPath.EndsWith(".meta") || newPath.EndsWith(".git"))
+                {
+                    continue;
+                }
                 File.Copy(newPath, newPath.Replace(sourcePath, targetPath), true);
             }
         }

@@ -8,16 +8,11 @@ This project is developed and maintained by **The Reading Racer Technology Found
 It enables **offline speech recognition** (no internet connection required) by embedding
 PocketSphinx directly into your Unity application.
 
----
-
 ## ⚠️ Project Status
 
 - Supported platforms: **Windows, macOS, Android, iOS**
-- Some platforms have **not been tested recently**
 - The software is provided **as-is**, without warranty
 - This project is **not affiliated with** Carnegie Mellon University or the CMU Sphinx project
-
----
 
 ## 🎙 What is PocketSphinx?
 
@@ -31,11 +26,10 @@ well suited for:
 - Privacy-sensitive environments
 - Educational software
 - Low-latency or constrained devices
+- The FSG approach used here makes it ideal for word by word recognition
 
 PocketSphinxForUnity exposes a subset of PocketSphinx and SphinxBase functionality in a
 form that can be used directly from Unity C# scripts.
-
----
 
 ## 📦 What This Project Provides
 
@@ -45,48 +39,46 @@ form that can be used directly from Unity C# scripts.
 - Example scenes demonstrating common usage patterns
 - Two bundled speech recognition models (children & adult)
 
----
-
 ## 🚀 Getting Started
 
+### Via the Unity Package Manager
+1. Open your Unity project and navigate to Window > Package Manager.
+2. Click the + (plus) icon in the top-left corner and select Add package from git URL....
+3. Paste the following URL, which uses the path query parameter to point directly to your subfolder:
+>https://github.com/ReadingRacerTechnologyFoundation/PocketSphinxForUnity.git?path=/Packages/com.readingracer.ps-unity
+
+### Or Pull the git repo
+All Required files are found under Packages/com.readingracer.ps-unity
 **Make sure to update submodules**
 ```bash
 git pull
 git submodule update --init --recursive
 ```
 
-### 📁 Required Folders & Files
+### 📁 Automatic Folder Setup
 
-You **must** include the following folders in your Unity project:
+ps-unity will automatically copy the files into your Assets Directory
 
-- **`Sphinx/`**  
-  Contains the PocketSphinx and SphinxBase C# wrapper code.
+-**`Assets/Resources/RRTF/ModelPaths.asset`**
+  Contains where the model data is in storage. See InitModelPaths.cs for more info.
 
-- **`StreamingAssets/`**  
-  Contains speech recognition models and related data.
+-**`Assets/StreamingAssets/ps-unity-modeldata`**
+  These are all the model files data we provide you in order to start recognizing speech.
 
-> ⚠️ **Important:**  
-> The `StreamingAssets` folder **must be placed directly under**:
->
-> ```
-> Assets/StreamingAssets
-> ```
->
-> Do not rename or nest this folder. Model loading depends on this exact structure,
-> especially on Android and iOS.
+-**`Assets/ps_unity_settings.asset`**
+  If you want to provide your own model data use this asset to signify you don't want the streaming assets data copied over.
+  Then modify ModelPaths.asset to detail where the new model data is
+
+#### Troubleshooting
+
+- If you believe you somehow corrupted your Assets described in the Automatic Folder setup portion, then delete those files and they will be copied back.
 
 ---
 
-### 🖥 Windows-Specific Setup
-
-If you wish to test or run on **Windows**, you must also include the following native
-libraries in your Unity project (as this repository does):
-
-- `EasyCallWrapper.dll`
-- `pocketsphinx.dll`
-- `sphinxbase.dll`
-
-These files must be available to Unity at runtime.
+### What words can be recognized?
+- We currently only provide an Adult and Child speech recognition models
+- Our default dictionary is not comprehensive. You may get an error/crash if the word is not found in the dictionary.
+- To add to the default dictionary, Modify `Assets/StreamingAssets/ps-unity-modeldata/ps_all_english/lm/default_dictionary.dic`
 
 ---
 
@@ -98,20 +90,15 @@ Finite State Grammars:
 - `tempFSG`
 - `tempFSGcloze`
 
-These files should not be committed. Add them to your `.gitignore`:
+---
 
-PS_UNITY_USE_FSG_FILE
-```gitignore
-tempFSG*
-tempFSGcloze*
-```
+### 🎬 Example Scenes
 
-🎬 Example Scenes
+The `Packages/com.readingracer.ps-unity/Samples` folder contains two sample scenes demonstrating how to create and use
+Finite State Grammars (FSGs) for structured speech recognition. These scenes also contain scripts like MicDevicePicker.cs and VolumeOutput
+that show you how to choose a microphone and calculate the volume via the microphone management class MicController.cs.
 
-The Examples folder contains two sample scenes demonstrating how to create and use
-Finite State Grammars (FSGs) for structured speech recognition.
-
-RecognizeSentence.scene
+**RecognizeSentence.scene**
 
 Demonstrates creating an FSG where:
 
@@ -119,7 +106,7 @@ Words must be spoken in a specific order
 
 Useful for guided reading or scripted prompts
 
-RecognizeRandomWords.scene
+**RecognizeRandomWords.scene**
 
 Demonstrates creating an FSG where:
 
@@ -144,52 +131,7 @@ FollowAlongRandomly
 These scripts demonstrate how to configure recognizers to use different acoustic models
 depending on your application.
 
-📘 Dictionary Requirement
-
-All words you want to recognize must exist in the dictionary.
-
-Default dictionary: DefaultStoryList.dic
-
-Words can be added if necessary
-
-If a word is missing from the dictionary, PocketSphinx cannot recognize it
-
-This is a core limitation of dictionary-based speech recognition systems.
-
-🛠 Troubleshooting
-❗ Speech is not recognized
-
-Most common cause: incorrect microphone
-
-The system always uses the default OS microphone
-
-Verify:
-
-The correct microphone is set as default
-
-Unity has microphone permission
-
-No other application is exclusively using the microphone
-
-❗ Some words are never recognized
-
-Second most common cause: missing dictionary entries
-
-Ensure all words in your grammar exist in DefaultStoryList.dic
-
-Add missing words with appropriate phonetic spellings
-
-🌐 About the Foundation
-
-PocketSphinxForUnity was originally developed to support speech recognition features
-for an educational reading game.
-
-To learn more about The Reading Racer Technology Foundation or the game that inspired
-this API, visit:
-
-👉 https://www.readingracer.com
-
-📄 Licensing & Attribution
+## 📄 Licensing & Attribution
 
 This project is licensed under the GNU LGPL v3 (or later).
 See the LICENSE file for full terms.
@@ -202,18 +144,21 @@ SphinxBase — BSD-2-Clause License
 
 Full attribution and license details are available in THIRD_PARTY_LICENSES.txt.
 
-❗ Disclaimer
+### ❗ Disclaimer
 
 This software is provided “AS IS”, without warranty of any kind.
 The Reading Racer Technology Foundation assumes no responsibility for misuse, errors,
 or unintended behavior.
 
-🤝 Contributing
+### 🤝 Contributing
 
 Contributions are welcome, but this project is maintained on a best-effort basis.
 No guarantees are made regarding response time or feature acceptance.
 
-# Reading Racer Technology Foundation
+# 🌐 Reading Racer Technology Foundation
+PocketSphinxForUnity was originally developed to support speech recognition features
+for an educational reading game called Reading Racer, available on iOS.
+
 Thank you for using PocketSphinx for Unity developed by 
 The Reading Racer Technology Foundation (RRTF). A non profit with the mission to promote and share Reading Racer’s speech engine and provide technical support to those building educational products.
 
