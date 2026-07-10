@@ -100,6 +100,7 @@ namespace Rrtf.Editor
         {
             StreamingAssetsSetup(packagePath);
             CopyModelPaths();
+            Debug.Log("ps-unity setup finished");
         }
 
         private static void StreamingAssetsSetup(string packagePath)
