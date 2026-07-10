@@ -16,6 +16,9 @@ using System.Text;
 
 namespace Rrtf
 {
+    /// <summary>
+    /// Helper extentions for string builder
+    /// </summary>
     public static class StringBuilderExtentions
     {
         /// <summary>

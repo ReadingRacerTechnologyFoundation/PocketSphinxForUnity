@@ -1,17 +1,50 @@
-using System;
-using System.Collections.Generic;
+/*
+ * Copyright (c) 2025 Reading Racer Technology Foundation
+ *
+ * This file is part of ReadingRacerTechnologyFoundation/PocketSphinxForUnity
+ *
+ * SPDX-License-Identifier: LGPL-3.0-or-later
+ *
+ * This software is distributed without any warranty.
+ * See the LICENSE file in the project root for full terms.
+ *
+ * This source may contain or make use of third-party components,
+ * including PocketSphinx and SphinxBase, which are licensed separately.
+ * See THIRD_PARTY_LICENSES.txt for details.
+ */
 using System.IO;
 using UnityEditor;
 using UnityEngine;
 
 namespace Rrtf
 {
+    /// <summary>
+    /// This class does two thing.
+    /// 1. Manages the model data folder paths set by the user.
+    /// 2. Once the user sets the paths, the ModelPathsEditor class will record all the files and directories that 
+    /// will need to be copied. The Copying is only used for Android and done by InitModelPaths
+    /// </summary>
     [CreateAssetMenu(fileName = "ModelPaths", menuName = "RRTF/ModelPaths")]
     public class ModelPaths : ScriptableObject
     {
+        /// <summary>
+        /// The Root of all the model data, local to StreamingAssets
+        /// </summary>
         public string ModelFolderRoot => _modelFolderRoot;
+
+        /// <summary>
+        /// Dictionary path. Local to the ModelFolderRoot
+        /// </summary>
         public string DictionarySubpath => _dictionarySubpath;
+
+        /// <summary>
+        /// The AccoustmicModel folder, local to the modelFolderRoot
+        /// </summary>
         public string AdultAccousticModelSubpath => _adultAccousticModelSubpath;
+
+        /// <summary>
+        /// The (optional) ChildAccousticModel folder, local to the modelFolderRoot
+        /// </summary>
         public string ChildAccousticModelSubpath => _childAccousticModelSubpath;
 
         /// <summary>

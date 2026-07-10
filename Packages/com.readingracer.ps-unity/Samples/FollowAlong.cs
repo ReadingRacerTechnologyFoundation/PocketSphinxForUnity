@@ -61,6 +61,7 @@ namespace Rrtf.Samples
 
 			InitModelPaths.AMChoice = _accousticModel;
 			Recognizer = new BasicFSGRecognizer(InitModelPaths.DefaultLanguageModelWeight, CreateConfig());
+			//we subscribe to SpeechChanged in order to find when new words have been said
 			Recognizer.SpeechChanged += HandleSpeechEvents;
 			_unreadColor = _words[0].color;
 
@@ -88,6 +89,8 @@ namespace Rrtf.Samples
 			}
 
 			_readButton.GetComponent<Image>().color = Color.gray;
+
+			//normally we would catch the return of this to know what was said, but we don't need to since its the same as _searchWords already
 			Recognizer.ListenFor(_searchString, InitModelPaths.DefaultLanguageModelWeight, _wordIndex, _foregivness, false);
 			Recognizer.EnableMicAndRecognize();
 			Debug.Log("began listening");
@@ -150,6 +153,10 @@ namespace Rrtf.Samples
 			}
 		}
 
+		/// <summary>
+		/// This wil mostly never change. Feel free to just reuse this config yourself
+		/// </summary>
+		/// <returns></returns>
 		private static SpeechConfig CreateConfig()
 		{
 			//config properties we are using

@@ -23,13 +23,28 @@ namespace Rrtf
 {
 
     /// <summary>
-    /// Sea shells recognizer. Specializes in using FSGs
+    /// A SpeechRecognizer that specializes in Finite State Grammars (FSGs)
     /// </summary>
     public sealed class BasicFSGRecognizer : SpeechRecognizer
     {
-        public static readonly string LISTEN_FOR_SEARCH_NAME = "DefaultFsgListenFor";
+        /// <summary>
+        /// The Default FSG search name.
+        /// </summary>
+        private static readonly string LISTEN_FOR_SEARCH_NAME = "DefaultFsgListenFor";
+
+        /// <summary>
+        /// The minimum Language Model Weight (LM weight)
+        /// </summary>
         public const int MIN_LANGUAGE_MODEL_WEIGHT = 0;
+
+        /// <summary>
+        /// The maximum language model weight (LM Weight)
+        /// </summary>
 		public const int MAX_LANGUAGE_MODEL_WEIGHT = 9;
+
+        /// <summary>
+        /// the index of the last word that was read. This indexes into the array returned by ListenFor
+        /// </summary>
         public int WordIndex { get; private set; }
 
         private readonly LogMath logmath;
@@ -37,8 +52,15 @@ namespace Rrtf
 
         private string[] wordSet;
 
-        // change minimum startword phonemes - was four, changed to three, now two
-        public const int MIN_STARTWORD_PHONEMES = 4;
+        /// <summary>
+        /// In order to reduce false positives with longer words, we have added START words. For words like DINOSAUR, we add words like
+        /// START_DINOSAUR could be just the partial word DINO. start words only get added if they have MIN_STARTWORD_PHONEMES or more
+        /// </summary>
+        private const int MIN_STARTWORD_PHONEMES = 4;
+
+        /// <summary>
+        /// In the original game <br> was used to indicate a line break. it gets ignored in the FSG
+        /// </summary>
         public const string LINE_BREAK = "<br>";
 
         /// <summary>
@@ -302,7 +324,11 @@ namespace Rrtf
         }
 
 
-        // stub code for startWordCalculatePronunciation
+        /// <summary>
+        /// Creates a START word by returning the phonemes used for the partial word
+        /// </summary>
+        /// <param name="word">the word you want a start word for</param>
+        /// <returns>phonemes used for a start word</returns>
         private string startWordCalculatePronunciation(string word)
         {
             string returnValue = "EH L AH F"; // default to START_ELEPHANT
@@ -383,7 +409,11 @@ namespace Rrtf
             // 6. return just the START_ pronunciation, for example "K IH"
         }
 
-        // 2016-03-01 endWordCalculatePronunciation
+        /// <summary>
+        /// this is similar to start words but is used to find the end parts of a word for pronounciation like SAUR in DINOSAUR
+        /// </summary>
+        /// <param name="word">the word you want an end word pronounciation</param>
+        /// <returns>phonemes for the end of a word</returns>
         private string endWordCalculatePronunciation(string word)
         {
             string returnValue = "F EH N T"; // default to END_ELEPHANT
@@ -465,8 +495,6 @@ namespace Rrtf
             return returnValue;
         }
 
-        // 2015-02-23 start word pronunciation for dates, hundreds, tens - Gregory Aist
-        // for dates, only handle most common cases of 1000 to 2099
         private string startWordPronunciationForDate(Char inThousandsDigit, Char inHundredsDigit)
         {
             string returnValue = string.Empty;
@@ -821,10 +849,7 @@ namespace Rrtf
             return returnValue;
         }
 
-
-        // 2015-12-17 only the vowels are different - "maybe yes"
-        // the maybeYes is reversible, e.g. f(dog) = dag, f(dag) = dog
-        public static char maybeYesNewVowelsChar(char inChar)
+        private static char maybeYesNewVowelsChar(char inChar)
         {
             char returnValue = inChar;
             switch (inChar)
@@ -869,7 +894,7 @@ namespace Rrtf
         }
 
         // calculate the maybe yes with just the vowels changed
-        public static string calculateMaybeYesNewVowelsWord(string inWord)
+        private static string calculateMaybeYesNewVowelsWord(string inWord)
         {
             string returnValue = ""; // don't need special character - just call this method again // "\'"; // detect MaybeYes words
             for (int i = 0; i < inWord.Length; i++)
@@ -882,7 +907,7 @@ namespace Rrtf
 
         // 2015-12-03 only the consonants are different - "maybe yes"
         // the maybeYes is reversible, e.g. f(dog) = tok, f(tok) = dog
-        public static char maybeYesChar(char inChar)
+        private static char maybeYesChar(char inChar)
         {
             char returnValue = inChar;
             switch (inChar)
@@ -967,7 +992,7 @@ namespace Rrtf
         }
 
         // calculate the maybe yes - similar to but different from the original word at each position
-        public static string calculateMaybeYesWord(string inWord)
+        private static string calculateMaybeYesWord(string inWord)
         {
             string returnValue = ""; // don't need special character - just call this method again //  = "\'"; // detect MaybeYes words
             for (int i = 0; i < inWord.Length; i++)
@@ -1497,6 +1522,6 @@ namespace Rrtf
         {
             return "END_" + word;
         }
-    }//end seashellsrecognizer
+    }//end BasicFSGRecognizer
 
 }//end namespace

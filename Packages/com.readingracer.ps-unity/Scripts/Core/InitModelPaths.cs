@@ -13,39 +13,45 @@
  * See THIRD_PARTY_LICENSES.txt for details.
  */
 using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using UnityEngine.Networking;
 using System.Threading.Tasks;
 using System;
-using UnityEngine.Assertions.Comparers;
-using System.Linq;
 
 namespace Rrtf
 {
     /// <summary>
-    /// This is a stupid class that only exists because android is stupid.
     /// Since Android needs to use www for retrieving things from the streamingassets folder
-    /// but pocketsphinx needs a real folder this will copy the data to a temp data path when on android
-    /// if we need it to. then modify the data path accordingly.
+    /// but pocketsphinx needs a real folder this will copy the data to a temp data path when on android.
     /// 
-    /// IMPORTANT: make a scene with this object is loaded BEFORE any scene with speech recognition.-
+    /// It also manages where the model paths are on device.
     /// 
-    /// How To Use: Let the awake be called before anything that uses this class. Then you are free to choose
-    /// the AMChoice. When a SeashellsRecognizer is created. It will automatically load the correct model path based
-    /// on the AMChoice.
+    /// IMPORTANT: For ease of use, this is setup to work in any scene without having to make gameobject yourself.
+    /// However, It is reccomemend that for builds, you have a loading scene with this attached to a gameobject.
+    /// 
+    /// To MODIFY paths: Resources/RRTF/ModelPaths.asset will need to be changed
+    /// 
+    /// How To Use: 
+    /// 1. Drop this on a gameobject
+    /// 2. Don't create a SpeechRecognizer/BasicFSGRecognizer until ArePathsFixed = true
+    /// 
+    /// This also supports two Accoustic model paths. Adult and Child. Adult is the default. If you switch AMChoice to child, the paths will also
+    /// update themselves correctly.
     /// </summary>
     public class InitModelPaths : MonoBehaviour
     {
+        /// <summary>
+        /// the path to the resource this uses to determine what the local paths for the model files should be
+        /// </summary>
         public const string ModelPathsResourcePath = "RRTF/ModelPaths";
         private static string modelFolder;
         private static string dictionaryPath;
 
         public enum ACCOUSTIC_MODELS { ADULT = 0, CHILD = 1 }
 
-        //returns the LM weight depending on device and current
-        //AM choice
+        /// <summary>
+        /// Useful if you want to change the LM Weight depending on the use of the child or adult accoustic model
+        /// </summary>
         public static int DefaultLanguageModelWeight
         {
             get
@@ -55,8 +61,9 @@ namespace Rrtf
             }
         }
 
-        //change this in the static constructor down below for testing purposes within unity
-        //accoustic model choice.
+        /// <summary>
+        /// Get or Set the Accoustic Model type. Adult or Child. Will update paths accordingly. ArePathsFixed must be true.
+        /// </summary>
         public static ACCOUSTIC_MODELS AMChoice
         {
             get { return _amchoice; }
@@ -68,7 +75,15 @@ namespace Rrtf
             }
         }
         private static ACCOUSTIC_MODELS _amchoice = ACCOUSTIC_MODELS.ADULT;
+
+        /// <summary>
+        /// Will return true once paths are ready to use
+        /// </summary>
         public static bool ArePathsFixed { get; private set; } = false;
+
+        /// <summary>
+        /// Absolute path to the ModelFolder
+        /// </summary>
         public static string ModelFolder
         {
             get
@@ -81,6 +96,10 @@ namespace Rrtf
                 return modelFolder;
             }
         }
+
+        /// <summary>
+        /// Absolute path to the dectionary file
+        /// </summary>
         public static string DictionaryPath
         {
             get
@@ -93,6 +112,10 @@ namespace Rrtf
                 return dictionaryPath;
             }
         }
+
+        /// <summary>
+        /// Absolute Path to the AccousticModel Folder
+        /// </summary>
         public static string AccousticModelFolder
         {
             get
@@ -114,9 +137,23 @@ namespace Rrtf
         /// Only used on android. Will return true if currently running the path fixing coroutine
         /// </summary>
         public static bool IsCurrentlyUpdatingPaths { get; private set; } = false;
+
+        /// <summary>
+        /// If you are using android and want to know the progress of files being copied. you can subscribe to this action.
+        /// </summary>
         public static Action<float> OnPathUpdateProgress;
+
+        /// <summary>
+        /// If you are using android and want to know when we have completed fixing paths, you can subscribe to this action.
+        /// </summary>
         public static Action<bool> OnPathUpdateCompletion;
+
+
 #if UNITY_EDITOR
+        /// <summary>
+        /// In order to avoid having this in every scene in editor, and having this out of the box in every scene in editor
+        /// this will take care of that for editor only
+        /// </summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void CorrectPathsForEditor()
         {

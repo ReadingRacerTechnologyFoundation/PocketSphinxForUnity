@@ -22,7 +22,7 @@ namespace Rrtf.Samples
 {
 	/// <summary>
 	/// A simple example showing how to use the BasicFSGRecognizer for words in any order.
-	/// cloze words can be said in any order
+	/// cloze words can be said in any order. This nearly identical to FollowAlong, however, ListenFor is called with cloze = true
 	/// </summary>
 	public class FollowAlongRandomly : MonoBehaviour
 	{
@@ -70,6 +70,7 @@ namespace Rrtf.Samples
 
 			InitModelPaths.AMChoice = _accousticModel;
 			Recognizer = new BasicFSGRecognizer(InitModelPaths.DefaultLanguageModelWeight, CreateConfig());
+			//we subscribe to SpeechChanged in order to find when new words have been said
 			Recognizer.SpeechChanged += HandleSpeechEvents;
 			_unreadColor = _words[0].color;
 
@@ -150,6 +151,10 @@ namespace Rrtf.Samples
 			}
 		}
 
+		/// <summary>
+		/// Identical to FollowAlong.CreateConfig
+		/// </summary>
+		/// <returns></returns>
 		private static SpeechConfig CreateConfig()
 		{
 			//config properties we are using

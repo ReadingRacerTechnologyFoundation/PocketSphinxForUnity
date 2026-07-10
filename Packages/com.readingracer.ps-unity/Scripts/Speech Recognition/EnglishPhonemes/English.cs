@@ -17,6 +17,11 @@ using System;
 
 namespace Rrtf.Sphinx.EnglishPhonemes
 {
+	/// <summary>
+	/// A C# port of the classic rsynth english.c text-to-phoneme module, 
+	/// originally derived from the 1976 Naval Research Laboratory letter-to-sound framework 
+	/// and historically utilized across CMU-associated speech synthesis and dictionary-generation toolchains.
+	/// </summary>
 	public class English{
 		
 		/* Context definitions */
