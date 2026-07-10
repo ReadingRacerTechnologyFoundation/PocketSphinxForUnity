@@ -157,6 +157,11 @@ SphinxBase — BSD-2-Clause License
 
 Full attribution and license details are available in THIRD_PARTY_LICENSES.txt.
 
+## ⚖️ Disclaimer & Affiliation
+* No Affiliation: This project is not officially affiliated with, endorsed by, or sponsored by Carnegie Mellon University (CMU) or the CMU Sphinx development team.
+* Core Technology: The underlying speech recognition functionality is powered entirely by Carnegie Mellon University's PocketSphinx library, which is distributed under the open-source BSD license.
+* All trademarks, registered trademarks, and copyrights related to PocketSphinx belong to their respective owners. Please support the original creators by checking out the official upstream repository at github.com/cmusphinx/pocketsphinx.
+
 ### ❗ Disclaimer
 
 This software is provided “AS IS”, without warranty of any kind.
