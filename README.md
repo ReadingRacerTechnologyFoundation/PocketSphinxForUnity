@@ -55,6 +55,9 @@ git pull
 git submodule update --init --recursive
 ```
 
+Once installed the package can be found inside of `Packages/com.readingracer.ps-unity`
+
+
 ### 📁 Automatic Folder Setup
 
 ps-unity will automatically copy the files into your Assets Directory
@@ -93,12 +96,22 @@ Finite State Grammars:
 ---
 
 ### 🎬 Example Scenes
+⚠️ Note on Unity Package Manager (UPM): If you installed this package via a Git URL in the Package Manager, the source files are imported as Read-Only. To open, run, or modify the sample scenes, you must first import them into your local Assets folder.
 
-The `Packages/com.readingracer.ps-unity/Samples` folder contains two sample scenes demonstrating how to create and use
-Finite State Grammars (FSGs) for structured speech recognition. These scenes also contain scripts like MicDevicePicker.cs and VolumeOutput
-that show you how to choose a microphone and calculate the volume via the microphone management class MicController.cs.
+How to Import Samples:
+Open Window > Package Manager in the Unity Editor.
 
-**RecognizeSentence.scene**
+Select PocketSphinx for Unity from the package list.
+
+Expand the Samples drop-down section in the package details panel on the right.
+
+Click the Import button next to Demo Scenes and Configurations.
+
+Once imported, you can find the fully editable scenes and scripts inside your project's Assets/Samples/PocketSphinx for Unity/[Version]/ folder.
+
+**Otherwise**, you can find the samples inside of Packages/PocketSphinx For Unity/Samples
+
+#### RecognizeSentence.scene
 
 Demonstrates creating an FSG where:
 
@@ -106,7 +119,7 @@ Words must be spoken in a specific order
 
 Useful for guided reading or scripted prompts
 
-**RecognizeRandomWords.scene**
+#### RecognizeRandomWords.scene
 
 Demonstrates creating an FSG where:
 
@@ -114,7 +127,7 @@ Words can be spoken in any order
 
 Useful for exploratory or free-form recognition tasks
 
-🧠 Speech Recognition Models
+#### 🧠 Speech Recognition Models
 
 Two speech recognition models are included:
 
