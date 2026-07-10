@@ -1,8 +1,0 @@
-feat.params
-feature_transform
-mdef
-means
-mixture_weights
-noisedict
-transition_matrices
-variances

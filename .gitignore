@@ -69,3 +69,6 @@ crashlytics-build.properties
 .vscode/
 tempFSGcloze
 tempFSG
+Assets/StreamingAssets/ps-unity-modeldata/
+Assets/_Recovery.meta
+Assets/_Recovery/
