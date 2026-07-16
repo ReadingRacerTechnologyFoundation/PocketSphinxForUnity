@@ -1,17 +1,2 @@
 fileFormatVersion: 2
 guid: 56e609d42c88d47b2ab95d6bb16bed1e
-timeCreated: 1434650697
-licenseType: Free
-MonoImporter:
-  serializedVersion: 2
-  defaultReferences:
-  - helloButton: {instanceID: 0}
-  - loadingLabel: {instanceID: 0}
-  - ProgressText: {instanceID: 0}
-  - ElephantAnimatorLoader: {fileID: 134696, guid: 98f6ed7bae8087143b4e4c42ae1cd59b,
-      type: 2}
-  executionOrder: 0
-  icon: {instanceID: 0}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
