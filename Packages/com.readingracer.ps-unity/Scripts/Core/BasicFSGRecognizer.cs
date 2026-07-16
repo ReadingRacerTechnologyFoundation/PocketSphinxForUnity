@@ -849,7 +849,7 @@ namespace Rrtf
             return returnValue;
         }
 
-        private static char maybeYesNewVowelsChar(char inChar)
+        public static char maybeYesNewVowelsChar(char inChar)
         {
             char returnValue = inChar;
             switch (inChar)
@@ -894,7 +894,7 @@ namespace Rrtf
         }
 
         // calculate the maybe yes with just the vowels changed
-        private static string calculateMaybeYesNewVowelsWord(string inWord)
+        public static string calculateMaybeYesNewVowelsWord(string inWord)
         {
             string returnValue = ""; // don't need special character - just call this method again // "\'"; // detect MaybeYes words
             for (int i = 0; i < inWord.Length; i++)
@@ -907,7 +907,7 @@ namespace Rrtf
 
         // 2015-12-03 only the consonants are different - "maybe yes"
         // the maybeYes is reversible, e.g. f(dog) = tok, f(tok) = dog
-        private static char maybeYesChar(char inChar)
+        public static char maybeYesChar(char inChar)
         {
             char returnValue = inChar;
             switch (inChar)
@@ -992,7 +992,7 @@ namespace Rrtf
         }
 
         // calculate the maybe yes - similar to but different from the original word at each position
-        private static string calculateMaybeYesWord(string inWord)
+        public static string calculateMaybeYesWord(string inWord)
         {
             string returnValue = ""; // don't need special character - just call this method again //  = "\'"; // detect MaybeYes words
             for (int i = 0; i < inWord.Length; i++)
@@ -1513,12 +1513,12 @@ namespace Rrtf
             return this.AddFSGModel(model, searchName);
         }
 
-        private static string startWord(string word)
+        public static string startWord(string word)
         {
             return "START_" + word;
         }
 
-        private static string endWord(string word)
+        public static string endWord(string word)
         {
             return "END_" + word;
         }
