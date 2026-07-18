@@ -49,6 +49,9 @@ namespace Rrtf
 
         public enum ACCOUSTIC_MODELS { ADULT = 0, CHILD = 1 }
 
+        public static int DEFAULT_ADULT_FORGIVENESS = 1;
+        public static int DEFAULT_CHILD_FORGIVENESS = 5;
+
         /// <summary>
         /// Useful if you want to change the LM Weight depending on the use of the child or adult accoustic model
         /// </summary>
@@ -56,8 +59,8 @@ namespace Rrtf
         {
             get
             {
-                if (AMChoice == ACCOUSTIC_MODELS.ADULT) return 1;
-                else return 5;
+                if (AMChoice == ACCOUSTIC_MODELS.ADULT) return DEFAULT_ADULT_FORGIVENESS;
+                else return DEFAULT_CHILD_FORGIVENESS;
             }
         }
 
