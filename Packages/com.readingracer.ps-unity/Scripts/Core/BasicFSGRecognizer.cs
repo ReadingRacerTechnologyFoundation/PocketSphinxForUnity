@@ -56,7 +56,7 @@ namespace Rrtf
         /// In order to reduce false positives with longer words, we have added START words. For words like DINOSAUR, we add words like
         /// START_DINOSAUR could be just the partial word DINO. start words only get added if they have MIN_STARTWORD_PHONEMES or more
         /// </summary>
-        private const int MIN_STARTWORD_PHONEMES = 4;
+        public const int MIN_STARTWORD_PHONEMES = 4;
 
         /// <summary>
         /// In the original game <br> was used to indicate a line break. it gets ignored in the FSG
