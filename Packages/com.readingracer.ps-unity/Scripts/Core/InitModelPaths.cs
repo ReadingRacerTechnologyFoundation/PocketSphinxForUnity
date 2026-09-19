@@ -157,7 +157,7 @@ namespace Rrtf
         /// In order to avoid having this in every scene in editor, and having this out of the box in every scene in editor
         /// this will take care of that for editor only
         /// </summary>
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void CorrectPathsForEditor()
         {
             if (!FindAnyObjectByType<InitModelPaths>())

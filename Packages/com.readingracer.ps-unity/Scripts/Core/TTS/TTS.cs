@@ -28,6 +28,9 @@ namespace Rrtf
 		public static bool IsSpeaking { get; private set; }
 		public static bool IsMuted { get; set; }
 
+		[Tooltip("Log TTS Msgs for debugging")]
+		public bool _isLoggingTTS = false;
+
 		private const string DONE_MSG = "DONE";
 		private const string BEGIN_MSG = "BEGIN";
 		private const string UTTERANCE_STATE_CHANGED_METHOD_NAME = "UtteranceStateChanged";
@@ -66,12 +69,12 @@ namespace Rrtf
 
 		private IEnumerator fakeTTS(string s)
 		{
-			//Debug.Log("TTS: " + s);
+			if(_isLoggingTTS)
+			{
+				Debug.Log("TTS: " + s);
+			}
 			IsSpeaking = true;
-			//yield return new WaitForSeconds(1);
-			int i = 0;
-			while (i++ < 100)
-				yield return null;
+			yield return new WaitForSeconds(0.5f);
 			IsSpeaking = false;
 		}
 
@@ -178,7 +181,10 @@ namespace Rrtf
 		/// <param name="isExplicitPronunciation">If set to <c>true</c> is explicit pronunciation.</param>
 		public static void Speak(string textToSpeak, bool isExplicitPronunciation = false)
 		{
-			//Debug.Log("TTS: " + textToSpeak);
+			if(tts._isLoggingTTS)
+			{
+				Debug.Log("TTS raw: " + textToSpeak);
+			}
 			if (IsMuted || string.IsNullOrEmpty(textToSpeak)) return;
 			if (!isExplicitPronunciation)
 			{
