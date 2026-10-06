@@ -74,7 +74,12 @@ namespace Rrtf
 				Debug.Log("TTS: " + s);
 			}
 			IsSpeaking = true;
-			yield return new WaitForSeconds(0.5f);
+			float dt = 0;
+			while(dt < 0.5f)
+			{
+				dt += Time.unscaledDeltaTime;
+				yield return null;
+			}
 			IsSpeaking = false;
 		}
 
